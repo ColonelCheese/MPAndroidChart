@@ -16,7 +16,7 @@ import java.util.ArrayList;
  * chartview.
  * 
  */
-public class DecartGraph extends BarLineChartBase<ScatterData> {
+public class DecartGraph extends DecartGraphBase<ScatterData> {
 
     /** enum that defines the shape that is drawn where the values are */
     public enum ScatterShape {

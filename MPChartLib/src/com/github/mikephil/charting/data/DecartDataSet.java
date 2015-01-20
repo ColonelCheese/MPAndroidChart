@@ -12,22 +12,49 @@ import java.util.ArrayList;
 
 public class DecartDataSet<T extends DecartEntry> {
 
-    /** arraylist representing all colors that are used for this DataSet */
+    /**
+     * arraylist representing all colors that are used for this DataSet
+     */
     protected ArrayList<Integer> mColors = null;
 
-    /** the entries that this dataset represents / holds together */
+    /**
+     * the entries that this dataset represents / holds together
+     */
     protected ArrayList<T> mEntries = null;
 
-    /** maximum y-value in the y-value array */
+    /**
+     * maximum y-value in the y-value array
+     */
     protected float mYMax = 0.0f;
 
-    /** the minimum y-value in the y-value array */
+    /**
+     * the minimum y-value in the y-value array
+     */
     protected float mYMin = 0.0f;
 
-    /** the total sum of all y-values */
+    /**
+     * the total sum of all y-values
+     */
     private float mYValueSum = 0f;
 
-    /** label that describes the DataSet or the data the DataSet represents */
+    /**
+     * maximum x-value in the x-value array
+     */
+    protected float mXMax = 0.0f;
+
+    /**
+     * the minimum x-value in the x-value array
+     */
+    protected float mXMin = 0.0f;
+
+    /**
+     * the total sum of all x-values
+     */
+    private float mXValueSum = 0f;
+
+    /**
+     * label that describes the DataSet or the data the DataSet represents
+     */
     private String mLabel = "DataSet";
 
     /**
@@ -51,105 +78,6 @@ public class DecartDataSet<T extends DecartEntry> {
      */
     private Path mCustomScatterPath = null;
 
-    public DecartDataSet<DecartEntry> copy() {
-
-        ArrayList<DecartEntry> vals = new ArrayList<DecartEntry>();
-
-        for (int i = 0; i < mEntries.size(); i++) {
-            mEntries.add(mEntries.get(i).copy());
-        }
-
-        DecartDataSet copied = new DecartDataSet(yVals, getLabel());
-        copied.mColors = mColors;
-        copied.mShapeSize = mShapeSize;
-        copied.mScatterShape = mScatterShape;
-        copied.mCustomScatterPath = mCustomScatterPath;
-        copied.mHighLightColor = mHighLightColor;
-
-        return copied;
-    }
-
-    /**
-     * Sets the size in density pixels the drawn scattershape will have. This
-     * only applies for non custom shapes.
-     *
-     * @param size
-     */
-    public void setScatterShapeSize(float size) {
-        mShapeSize = Utils.convertDpToPixel(size);
-    }
-
-    /**
-     * returns the currently set scatter shape size
-     *
-     * @return
-     */
-    public float getScatterShapeSize() {
-        return mShapeSize;
-    }
-
-    /**
-     * Sets the shape that is drawn on the position where the values are at. If
-     * "CUSTOM" is chosen, you need to call setCustomScatterShape(...) and
-     * provide a path object that is drawn as the custom scattershape.
-     *
-     * @param shape
-     */
-    public void setScatterShape(ScatterShape shape) {
-        mScatterShape = shape;
-    }
-
-    /**
-     * returns all the different scattershapes the chart uses
-     *
-     * @return
-     */
-    public ScatterShape getScatterShape() {
-        return mScatterShape;
-    }
-
-    /**
-     * Sets a path object as the shape to be drawn where the values are at. Do
-     * not forget to call setScatterShape(...) and set the shape to
-     * ScatterShape.CUSTOM.
-     *
-     * @param shape
-     */
-    public void setCustomScatterShape(Path shape) {
-        mCustomScatterPath = shape;
-    }
-
-    /**
-     * returns the custom path / shape that is specified to be drawn where the
-     * values are at
-     *
-     * @return
-     */
-    public Path getCustomScatterShape() {
-        return mCustomScatterPath;
-    }
-
-    /**
-     * Sets the color that is used for drawing the highlight indicators. Dont
-     * forget to resolve the color using getResources().getColor(...) or
-     * Color.rgb(...).
-     *
-     * @param color
-     */
-    public void setHighLightColor(int color) {
-        mHighLightColor = color;
-    }
-
-    /**
-     * Returns the color that is used for drawing the highlight indicators.
-     *
-     * @return
-     */
-    public int getHighLightColor() {
-        return mHighLightColor;
-    }
-
-
     /**
      * Creates a new DataSet object with the given values it represents. Also, a
      * label that describes the DataSet can be specified. The label can also be
@@ -158,23 +86,16 @@ public class DecartDataSet<T extends DecartEntry> {
      * @param yVals
      * @param label
      */
-    public DataSet(ArrayList<T> yVals, String label) {
+    public DecartDataSet(ArrayList<T> entries, String label) {
 
         this.mLabel = label;
-        this.mYVals = yVals;
+        this.mEntries = entries;
 
-        if (mYVals == null)
-            mYVals = new ArrayList<T>();
-
-        // if (yVals.size() <= 0) {
-        // return;
-        // }
+        if (mEntries == null)
+            mEntries = new ArrayList<T>();
 
         mColors = new ArrayList<Integer>();
 
-        // default colors
-        // mColors.add(Color.rgb(192, 255, 140));
-        // mColors.add(Color.rgb(255, 247, 140));
         mColors.add(Color.rgb(140, 234, 255));
 
         calcMinMax();
@@ -193,24 +114,32 @@ public class DecartDataSet<T extends DecartEntry> {
      * calc minimum and maximum y value
      */
     protected void calcMinMax() {
-        if (mYVals.size() == 0) {
+        if (mEntries.size() == 0) {
             return;
         }
 
-        mYMin = mYVals.get(0).getVal();
-        mYMax = mYVals.get(0).getVal();
+        mYMin = mEntries.get(0).getYVal();
+        mYMax = mEntries.get(0).getYVal();
+        mXMin = mEntries.get(0).getXVal();
+        mXMax = mEntries.get(0).getXVal();
 
-        for (int i = 0; i < mYVals.size(); i++) {
+        for (int i = 0; i < mEntries.size(); i++) {
 
-            Entry e = mYVals.get(i);
+            DecartEntry e = mEntries.get(i);
 
             if (e != null) {
 
-                if (e.getVal() < mYMin)
-                    mYMin = e.getVal();
+                if (e.getYVal() < mYMin)
+                    mYMin = e.getYVal();
 
-                if (e.getVal() > mYMax)
-                    mYMax = e.getVal();
+                if (e.getYVal() > mYMax)
+                    mYMax = e.getYVal();
+
+                if (e.getXVal() < mXMin)
+                    mXMin = e.getXVal();
+
+                if (e.getXVal() > mXMax)
+                    mXMax = e.getXVal();
             }
         }
     }
@@ -222,10 +151,10 @@ public class DecartDataSet<T extends DecartEntry> {
 
         mYValueSum = 0;
 
-        for (int i = 0; i < mYVals.size(); i++) {
-            Entry e = mYVals.get(i);
+        for (int i = 0; i < mEntries.size(); i++) {
+            DecartEntry e = mEntries.get(i);
             if (e != null)
-                mYValueSum += Math.abs(e.getVal());
+                mYValueSum += Math.abs(e.getYVal());
         }
     }
 
@@ -235,87 +164,7 @@ public class DecartDataSet<T extends DecartEntry> {
      * @return
      */
     public int getEntryCount() {
-        return mYVals.size();
-    }
-
-    /**
-     * Returns the value of the Entry object at the given xIndex. Returns
-     * Float.NaN if no value is at the given x-index. INFORMATION: This method
-     * does calculations at runtime. Do not over-use in performance critical
-     * situations.
-     *
-     * @param xIndex
-     * @return
-     */
-    public float getYValForXIndex(int xIndex) {
-
-        Entry e = getEntryForXIndex(xIndex);
-
-        if (e != null)
-            return e.getVal();
-        else
-            return Float.NaN;
-    }
-
-    /**
-     * Returns the first Entry object found at the given xIndex with binary
-     * search. Returns null if no Entry object at that index. INFORMATION: This
-     * method does calculations at runtime. Do not over-use in performance
-     * critical situations.
-     *
-     * @param xIndex
-     * @return
-     */
-    public T getEntryForXIndex(int x) {
-
-        int low = 0;
-        int high = mYVals.size() - 1;
-
-        while (low <= high) {
-            int m = (high + low) / 2;
-
-            if (x == mYVals.get(m).getXIndex()) {
-                return mYVals.get(m);
-            }
-
-            if (x > mYVals.get(m).getXIndex())
-                low = m + 1;
-            else
-                high = m - 1;
-        }
-
-        return null;
-    }
-
-    /**
-     * Returns all Entry objects at the given xIndex. INFORMATION: This method
-     * does calculations at runtime. Do not over-use in performance critical
-     * situations.
-     *
-     * @param xIndex
-     * @return
-     */
-    public ArrayList<T> getEntriesForXIndex(int x) {
-
-        ArrayList<T> entries = new ArrayList<T>();
-
-        int low = 0;
-        int high = mYVals.size();
-
-        while (low <= high) {
-            int m = (high + low) / 2;
-
-            if (x == mYVals.get(m).getXIndex()) {
-                entries.add(mYVals.get(m));
-            }
-
-            if (x > mYVals.get(m).getXIndex())
-                low = m + 1;
-            else
-                high = m - 1;
-        }
-
-        return entries;
+        return mEntries.size();
     }
 
     /**
@@ -323,8 +172,8 @@ public class DecartDataSet<T extends DecartEntry> {
      *
      * @return
      */
-    public ArrayList<T> getYVals() {
-        return mYVals;
+    public ArrayList<T> getEntries() {
+        return mEntries;
     }
 
     /**
@@ -355,6 +204,33 @@ public class DecartDataSet<T extends DecartEntry> {
     }
 
     /**
+     * gets the sum of all x-values
+     *
+     * @return
+     */
+    public float getXValueSum() {
+        return mXValueSum;
+    }
+
+    /**
+     * returns the minimum x-value this DataSet holds
+     *
+     * @return
+     */
+    public float getXMin() {
+        return mXMin;
+    }
+
+    /**
+     * returns the maximum x-value this DataSet holds
+     *
+     * @return
+     */
+    public float getXMax() {
+        return mXMax;
+    }
+
+    /**
      * returns the type of the DataSet, specified via constructor
      *
      * @return
@@ -362,39 +238,12 @@ public class DecartDataSet<T extends DecartEntry> {
     // public int getType() {
     // return mType;
     // }
-
-    /**
-     * The xIndex of an Entry object is provided. This method returns the actual
-     * index in the Entry array of the DataSet. IMPORTANT: This method does
-     * calculations at runtime, do not over-use in performance critical
-     * situations.
-     *
-     * @param xIndex
-     * @return
-     */
-    public int getIndexInEntries(int xIndex) {
-
-        for (int i = 0; i < mYVals.size(); i++) {
-            if (xIndex == mYVals.get(i).getXIndex())
-                return i;
-        }
-
-        return -1;
-    }
-
-    /**
-     * Provides an exact copy of the DataSet this method is used on.
-     *
-     * @return
-     */
-    public abstract DataSet<T> copy();
-
     @Override
     public String toString() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(toSimpleString());
-        for (int i = 0; i < mYVals.size(); i++) {
-            buffer.append(mYVals.get(i).toString() + " ");
+        for (int i = 0; i < mEntries.size(); i++) {
+            buffer.append(mEntries.get(i).toString() + " ");
         }
         return buffer.toString();
     }
@@ -407,7 +256,7 @@ public class DecartDataSet<T extends DecartEntry> {
      */
     public String toSimpleString() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append("DataSet, label: " + mLabel + ", entries: " + mYVals.size() + "\n");
+        buffer.append("DataSet, label: " + mLabel + ", entries: " + mEntries.size() + "\n");
         return buffer.toString();
     }
 
@@ -426,30 +275,38 @@ public class DecartDataSet<T extends DecartEntry> {
      *
      * @param d
      */
-    public void addEntry(Entry e) {
+    public void addEntry(DecartEntry e) {
 
         if (e == null)
             return;
 
-        float val = e.getVal();
+        float yval = e.getYVal();
+        float xval = e.getYVal();
 
-        if (mYVals == null || mYVals.size() <= 0) {
+        if (mEntries == null || mEntries.size() <= 0) {
 
-            mYVals = new ArrayList<T>();
-            mYMax = val;
-            mYMin = val;
+            mEntries = new ArrayList<T>();
+            mYMax = yval;
+            mYMin = yval;
+            mXMax = xval;
+            mXMin = xval;
         } else {
 
-            if (mYMax < val)
-                mYMax = val;
-            if (mYMin > val)
-                mYMin = val;
+            if (mYMax < yval)
+                mYMax = yval;
+            if (mYMin > yval)
+                mYMin = yval;
+            if (mXMax < xval)
+                mXMax = xval;
+            if (mXMin > xval)
+                mXMin = xval;
         }
 
-        mYValueSum += val;
+        mYValueSum += yval;
+        mXValueSum += xval;
 
         // add the entry
-        mYVals.add((T) e);
+        mEntries.add((T) e);
     }
 
     /**
@@ -460,18 +317,20 @@ public class DecartDataSet<T extends DecartEntry> {
      *
      * @param e
      */
-    public boolean removeEntry(T e) {
+    public boolean removeEntry(DecartEntry e) {
 
         if (e == null)
             return false;
 
         // remove the entry
-        boolean removed = mYVals.remove(e);
+        boolean removed = mEntries.remove(e);
 
         if (removed) {
 
-            float val = e.getVal();
-            mYValueSum -= val;
+            float yval = e.getYVal();
+            mYValueSum -= yval;
+            float xval = e.getXVal();
+            mXValueSum -= xval;
 
             calcMinMax();
         }
@@ -479,17 +338,6 @@ public class DecartDataSet<T extends DecartEntry> {
         return removed;
     }
 
-    /**
-     * Removes the Entry object that has the given xIndex from the DataSet.
-     * Returns true if an Entry was removed, false if no Entry could be removed.
-     *
-     * @param xIndex
-     */
-    public boolean removeEntry(int xIndex) {
-
-        T e = getEntryForXIndex(xIndex);
-        return removeEntry(e);
-    }
 
     /** BELOW THIS COLOR HANDLING */
 
@@ -592,6 +440,11 @@ public class DecartDataSet<T extends DecartEntry> {
         return mColors.get(0);
     }
 
+
+    public boolean containsEntry(DecartEntry entry) {
+        return mEntries.contains(entry);
+    }
+
     /**
      * Resets all colors of this DataSet and recreates the colors array.
      */
@@ -599,21 +452,101 @@ public class DecartDataSet<T extends DecartEntry> {
         mColors = new ArrayList<Integer>();
     }
 
-    /**
-     * Returns the position of the provided entry in the DataSets Entry array.
-     * Returns -1 if doesnt exist.
-     *
-     * @param e
-     * @return
-     */
-    public int getEntryPosition(Entry e) {
+    public DecartDataSet<DecartEntry> copy() {
 
-        for (int i = 0; i < mYVals.size(); i++) {
-            if (e.equalTo(mYVals.get(i)))
-                return i;
+        for (int i = 0; i < mEntries.size(); i++) {
+            DecartEntry copiedEntry = mEntries.get(i).copy();
+            mEntries.add((T) copiedEntry);
         }
 
-        return -1;
+        DecartDataSet copied = new DecartDataSet(mEntries, getLabel());
+        copied.mColors = mColors;
+        copied.mShapeSize = mShapeSize;
+        copied.mScatterShape = mScatterShape;
+        copied.mCustomScatterPath = mCustomScatterPath;
+        copied.mHighLightColor = mHighLightColor;
+
+        return copied;
+    }
+
+    /**
+     * Sets the size in density pixels the drawn scattershape will have. This
+     * only applies for non custom shapes.
+     *
+     * @param size
+     */
+    public void setScatterShapeSize(float size) {
+        mShapeSize = Utils.convertDpToPixel(size);
+    }
+
+    /**
+     * returns the currently set scatter shape size
+     *
+     * @return
+     */
+    public float getScatterShapeSize() {
+        return mShapeSize;
+    }
+
+    /**
+     * Sets the shape that is drawn on the position where the values are at. If
+     * "CUSTOM" is chosen, you need to call setCustomScatterShape(...) and
+     * provide a path object that is drawn as the custom scattershape.
+     *
+     * @param shape
+     */
+    public void setScatterShape(ScatterShape shape) {
+        mScatterShape = shape;
+    }
+
+    /**
+     * returns all the different scattershapes the chart uses
+     *
+     * @return
+     */
+    public ScatterShape getScatterShape() {
+        return mScatterShape;
+    }
+
+    /**
+     * Sets a path object as the shape to be drawn where the values are at. Do
+     * not forget to call setScatterShape(...) and set the shape to
+     * ScatterShape.CUSTOM.
+     *
+     * @param shape
+     */
+    public void setCustomScatterShape(Path shape) {
+        mCustomScatterPath = shape;
+    }
+
+    /**
+     * returns the custom path / shape that is specified to be drawn where the
+     * values are at
+     *
+     * @return
+     */
+    public Path getCustomScatterShape() {
+        return mCustomScatterPath;
+    }
+
+    /**
+     * Sets the color that is used for drawing the highlight indicators. Dont
+     * forget to resolve the color using getResources().getColor(...) or
+     * Color.rgb(...).
+     *
+     * @param color
+     */
+    public void setHighLightColor(int color) {
+        mHighLightColor = color;
+    }
+
+    /**
+     * Returns the color that is used for drawing the highlight indicators.
+     *
+     * @return
+     */
+    public int getHighLightColor() {
+        return mHighLightColor;
     }
 
 }

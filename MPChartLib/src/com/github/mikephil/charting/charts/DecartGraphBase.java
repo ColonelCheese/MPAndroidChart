@@ -1193,7 +1193,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
                 e.getXIndex(), e.getVal()
         };
 
-        if (this instanceof BarChart) {
+        if (this instanceof DecartGraph) {
 
             BarDataSet set = (BarDataSet) mData.getDataSetForEntry(e);
             if (set != null)
