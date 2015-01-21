@@ -1,8 +1,9 @@
-
 package com.github.mikephil.charting.charts;
 
 import android.annotation.SuppressLint;
+import android.content.ContentValues;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -11,44 +12,278 @@ import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 
 import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.BarLineScatterCandleData;
-import com.github.mikephil.charting.data.BarLineScatterCandleRadarDataSet;
+import com.github.mikephil.charting.data.DataSet;
+import com.github.mikephil.charting.data.DecartData;
+import com.github.mikephil.charting.data.DecartDataSet;
+import com.github.mikephil.charting.data.DecartEntry;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.filter.Approximator;
+import com.github.mikephil.charting.interfaces.ChartInterface;
+import com.github.mikephil.charting.interfaces.OnChartGestureListener;
+import com.github.mikephil.charting.interfaces.OnChartValueSelectedListener;
 import com.github.mikephil.charting.interfaces.OnDrawListener;
-import com.github.mikephil.charting.listener.BarLineChartTouchListener;
+import com.github.mikephil.charting.renderer.Transformer;
+import com.github.mikephil.charting.utils.FXLabels;
 import com.github.mikephil.charting.utils.Highlight;
+import com.github.mikephil.charting.utils.Legend;
 import com.github.mikephil.charting.utils.Legend.LegendPosition;
 import com.github.mikephil.charting.utils.LimitLine;
 import com.github.mikephil.charting.utils.LimitLine.LimitLabelPosition;
+import com.github.mikephil.charting.utils.MarkerView;
 import com.github.mikephil.charting.utils.PointD;
 import com.github.mikephil.charting.utils.SelInfo;
 import com.github.mikephil.charting.utils.Utils;
+import com.github.mikephil.charting.utils.ValueFormatter;
 import com.github.mikephil.charting.utils.XLabels;
 import com.github.mikephil.charting.utils.XLabels.XLabelPosition;
 import com.github.mikephil.charting.utils.YLabels;
 import com.github.mikephil.charting.utils.YLabels.YLabelPosition;
+import com.nineoldandroids.animation.ObjectAnimator;
+import com.nineoldandroids.animation.ValueAnimator;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 /**
  * Base-class of DecartGraph.
- * 
+ *
  * @author Philipp Jahoda
  */
 @SuppressLint("RtlHardcoded")
-public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? extends BarLineScatterCandleRadarDataSet<? extends Entry>>>
-        extends Chart<T> {
+public abstract class DecartGraphBase<T extends DecartData> extends
+        ViewGroup
+        implements ValueAnimator.AnimatorUpdateListener, ChartInterface {
+    public static final String LOG_TAG = "MPChart";
 
-    /** the maximum number of entried to which values will be drawn */
-    protected int mMaxVisibleCount = 10000;
+    /**
+     * custom formatter that is used instead of the auto-formatter if set
+     */
+    protected ValueFormatter mValueFormatter = null;
 
-    /** the width of the grid lines */
+    /**
+     * flag that indicates if the default formatter should be used or if a
+     * custom one is set
+     */
+    private boolean mUseDefaultFormatter = true;
+
+    /**
+     * flag that indicates if logging is enabled or not
+     */
+    protected boolean mLogEnabled = false;
+
+    /**
+     * chart offset to the left
+     */
+    protected float mOffsetLeft = 12;
+
+    /**
+     * chart toffset to the top
+     */
+    protected float mOffsetTop = 12;
+
+    /**
+     * chart offset to the right
+     */
+    protected float mOffsetRight = 12;
+
+    /**
+     * chart offset to the bottom
+     */
+    protected float mOffsetBottom = 12;
+
+    /**
+     * object that holds all data that was originally set for the chart, before
+     * it was modified or any filtering algorithms had been applied
+     */
+    protected T mData = null;
+
+    /**
+     * the canvas that is used for drawing on the bitmap
+     */
+    protected Canvas mDrawCanvas;
+
+    /**
+     * the lowest y-value the chart can display
+     */
+    protected float mYChartMin = 0.0f;
+
+    /**
+     * the highest y-value the chart can display
+     */
+    protected float mYChartMax = 0.0f;
+
+    /**
+     * the lowest x-value the chart can display
+     */
+    protected float mXChartMin = 0.0f;
+
+    /**
+     * the highest x-value the chart can display
+     */
+    protected float mXChartMax = 0.0f;
+
+    /**
+     * paint for the x-label values
+     */
+    protected Paint mXLabelPaint;
+
+    /**
+     * paint for the y-label values
+     */
+    protected Paint mYLabelPaint;
+
+    /**
+     * paint used for highlighting values
+     */
+    protected Paint mHighlightPaint;
+
+    /**
+     * paint object used for drawing the description text in the bottom right
+     * corner of the chart
+     */
+    protected Paint mDescPaint;
+
+    /**
+     * paint object for drawing the information text when there are no values in
+     * the chart
+     */
+    protected Paint mInfoPaint;
+
+    /**
+     * paint object for drawing values (text representing values of chart
+     * entries)
+     */
+    protected Paint mValuePaint;
+
+    /**
+     * this is the paint object used for drawing the data onto the chart
+     */
+    protected Paint mRenderPaint;
+
+    /**
+     * paint for the legend labels
+     */
+    protected Paint mLegendLabelPaint;
+
+    /**
+     * paint used for the legend forms
+     */
+    protected Paint mLegendFormPaint;
+
+    /**
+     * paint used for the limit lines
+     */
+    protected Paint mLimitLinePaint;
+
+    /**
+     * description text that appears in the bottom right corner of the chart
+     */
+    protected String mDescription = "Description";
+
+    /**
+     * flag that indicates if the chart has been fed with data yet
+     */
+    protected boolean mDataNotSet = true;
+
+    /**
+     * if true, units are drawn next to the values in the chart
+     */
+    protected boolean mDrawUnitInChart = false;
+
+    /**
+     * the range of y-values the chart displays
+     */
+    protected float mDeltaY = 1f;
+
+    /**
+     * the range of x-values the chart displays
+     */
+    protected float mDeltaX = 1f;
+
+    /**
+     * if true, touch gestures are enabled on the chart
+     */
+    protected boolean mTouchEnabled = true;
+
+    /**
+     * if true, y-values are drawn on the chart
+     */
+    protected boolean mDrawYValues = true;
+
+    /**
+     * if true, value highlightning is enabled
+     */
+    protected boolean mHighlightEnabled = true;
+
+    /**
+     * flag indicating if the legend is drawn of not
+     */
+    protected boolean mDrawLegend = true;
+
+    /**
+     * this rectangle defines the area in which graph values can be drawn
+     */
+    protected RectF mContentRect = new RectF();
+
+    /**
+     * the legend object containing all data associated with the legend
+     */
+    protected Legend mLegend;
+
+    /**
+     * Transformer object used to transform values to pixels and the other way
+     * around
+     */
+    protected Transformer mTrans;
+
+    /**
+     * listener that is called when a value on the chart is selected
+     */
+    protected OnChartValueSelectedListener mSelectionListener;
+
+    /**
+     * text that is displayed when the chart is empty
+     */
+    private String mNoDataText = "No chart data available.";
+
+    /**
+     * Gesture listener for custom callbacks when making gestures on the chart.
+     */
+    private OnChartGestureListener mGestureListener;
+
+    /**
+     * text that is displayed when the chart is empty that describes why the
+     * chart is empty
+     */
+    private String mNoDataTextDescription;
+
+
+    /**
+     * the maximum number of entried to which values will be drawn
+     */
+    protected int mMaxVisibleCount = 1000;
+
+    /**
+     * the width of the grid lines
+     */
     protected float mGridWidth = 1f;
 
     /**
@@ -58,28 +293,44 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
      */
     protected boolean mPinchZoomEnabled = true;
 
-    /** flat that indicates if double tap zoom is enabled or not */
+    /**
+     * flat that indicates if double tap zoom is enabled or not
+     */
     protected boolean mDoubleTapToZoomEnabled = true;
 
-    /** if true, dragging is enabled for the chart */
+    /**
+     * if true, dragging is enabled for the chart
+     */
     private boolean mDragEnabled = true;
 
-    /** if true, scaling is enabled for the chart */
+    /**
+     * if true, scaling is enabled for the chart
+     */
     private boolean mScaleEnabled = true;
 
-    /** if true, the y range is predefined */
+    /**
+     * if true, the y range is predefined
+     */
     protected boolean mFixedYValues = false;
 
-    /** if true, the y-label entries will always start at zero */
+    /**
+     * if true, the y-label entries will always start at zero
+     */
     protected boolean mStartAtZero = true;
 
-    /** paint object for the grid lines */
+    /**
+     * paint object for the grid lines
+     */
     protected Paint mGridPaint;
 
-    /** paint object for the (by default) lightgrey background of the grid */
+    /**
+     * paint object for the (by default) lightgrey background of the grid
+     */
     protected Paint mGridBackgroundPaint;
 
-    /** paint for the line surrounding the chart */
+    /**
+     * paint for the line surrounding the chart
+     */
     protected Paint mBorderPaint;
 
     /**
@@ -88,26 +339,46 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
      */
     protected boolean mHighLightIndicatorEnabled = true;
 
-    /** flag indicating if the vertical grid should be drawn or not */
+    /**
+     * flag indicating if the vertical grid should be drawn or not
+     */
     protected boolean mDrawVerticalGrid = true;
 
-    /** flag indicating if the horizontal grid should be drawn or not */
+    /**
+     * flag indicating if the horizontal grid should be drawn or not
+     */
     protected boolean mDrawHorizontalGrid = true;
 
-    /** flag indicating if the y-labels should be drawn or not */
+    /**
+     * flag indicating if the y-labels should be drawn or not
+     */
     protected boolean mDrawYLabels = true;
 
-    /** flag indicating if the x-labels should be drawn or not */
+    /**
+     * flag indicating if the x-labels should be drawn or not
+     */
     protected boolean mDrawXLabels = true;
 
-    /** flag indicating if the chart border rectangle should be drawn or not */
+    /**
+     * flag indicating if the chart border rectangle should be drawn or not
+     */
     protected boolean mDrawBorder = true;
 
-    /** flag indicating if the grid background should be drawn or not */
+    /**
+     * flag indicating if the grid background should be drawn or not
+     */
     protected boolean mDrawGridBackground = true;
 
-    /** the listener for user drawing on the chart */
+    /**
+     * the listener for user drawing on the chart
+     */
     protected OnDrawListener mDrawListener;
+
+    /**
+     * the object representing the labels on thexy-axis, this object is prepared
+     * in the pepareXLabels() method
+     */
+    protected FXLabels mXLabels = new FXLabels();
 
     /**
      * the object representing the labels on the y-axis, this object is prepared
@@ -115,26 +386,108 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
      */
     protected YLabels mYLabels = new YLabels();
 
-    /** the object representing the labels on the x-axis */
-    protected XLabels mXLabels = new XLabels();
+    /**
+     * flag that indicates if offsets calculation has already been done or not
+     */
+    private boolean mOffsetsCalculated = false;
 
-    public DecartGraphBase(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-    }
+    /**
+     * Bitmap object used for drawing. This is necessary because hardware
+     * acceleration uses OpenGL which only allows a specific texture size to be
+     * drawn on the canvas directly.
+     */
+    protected Bitmap mDrawBitmap;
 
-    public DecartGraphBase(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+    /**
+     * paint object used for drawing the bitmap
+     */
+    protected Paint mDrawPaint;
 
+    /**
+     * default constructor for initialization in code
+     */
     public DecartGraphBase(Context context) {
         super(context);
+        init();
     }
 
-    @Override
-    protected void init() {
-        super.init();
+    /**
+     * constructor for initialization in xml
+     */
+    public DecartGraphBase(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init();
+    }
 
-        //mListener = new BarLineChartTouchListener(this, mTrans.getTouchMatrix());
+    /**
+     * even more awesome constructor
+     */
+    public DecartGraphBase(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        init();
+    }
+
+    /**
+     * initialize all paints and stuff
+     */
+    protected void init() {
+
+        setWillNotDraw(false);
+
+        mTrans = new Transformer();
+
+        // initialize the utils
+        Utils.init(getContext().getResources());
+
+        // do screen density conversions
+        mOffsetBottom = (int) Utils.convertDpToPixel(mOffsetBottom);
+        mOffsetLeft = (int) Utils.convertDpToPixel(mOffsetLeft);
+        mOffsetRight = (int) Utils.convertDpToPixel(mOffsetRight);
+        mOffsetTop = (int) Utils.convertDpToPixel(mOffsetTop);
+
+        mRenderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mRenderPaint.setStyle(Style.FILL);
+
+        mDescPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mDescPaint.setColor(Color.BLACK);
+        mDescPaint.setTextAlign(Align.RIGHT);
+        mDescPaint.setTextSize(Utils.convertDpToPixel(9f));
+
+        mInfoPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mInfoPaint.setColor(Color.rgb(247, 189, 51)); // orange
+        mInfoPaint.setTextAlign(Align.CENTER);
+        mInfoPaint.setTextSize(Utils.convertDpToPixel(12f));
+
+        mValuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mValuePaint.setColor(Color.rgb(63, 63, 63));
+        mValuePaint.setTextAlign(Align.CENTER);
+        mValuePaint.setTextSize(Utils.convertDpToPixel(9f));
+
+        mLegendFormPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mLegendFormPaint.setStyle(Paint.Style.FILL);
+        mLegendFormPaint.setStrokeWidth(3f);
+
+        mLegendLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mLegendLabelPaint.setTextSize(Utils.convertDpToPixel(9f));
+
+        mHighlightPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mHighlightPaint.setStyle(Paint.Style.STROKE);
+        mHighlightPaint.setStrokeWidth(2f);
+        mHighlightPaint.setColor(Color.rgb(255, 187, 115));
+
+        mXLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mXLabelPaint.setColor(Color.BLACK);
+        mXLabelPaint.setTextAlign(Align.CENTER);
+        mXLabelPaint.setTextSize(Utils.convertDpToPixel(10f));
+
+        mYLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mYLabelPaint.setColor(Color.BLACK);
+        mYLabelPaint.setTextSize(Utils.convertDpToPixel(10f));
+
+        mLimitLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mLimitLinePaint.setStyle(Paint.Style.STROKE);
+
+        mDrawPaint = new Paint(Paint.DITHER_FLAG);
 
         mGridPaint = new Paint();
         mGridPaint.setColor(Color.GRAY);
@@ -152,24 +505,218 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
         mGridBackgroundPaint.setColor(Color.rgb(240, 240, 240));
     }
 
+    /**
+     * Sets a new data object for the chart. The data object contains all values
+     * and information needed for displaying.
+     *
+     * @param data
+     */
+    public void setData(T data) {
+
+
+        if (data == null) {
+            Log.e(LOG_TAG,
+                    "Cannot set data for chart. Provided data object is null.");
+            return;
+        }
+
+        mDataNotSet = false;
+        mOffsetsCalculated = false;
+        mData = data;
+        mData = data;
+
+        prepare();
+
+        // calculate how many digits are needed
+        calcFormats();
+
+        Log.i(LOG_TAG, "Data is set.");
+    }
+
+    /**
+     * Clears the chart from all data and refreshes it (by calling
+     * invalidate()).
+     */
+    public void clear() {
+        mData = null;
+        mData = null;
+        mDataNotSet = true;
+        invalidate();
+    }
+
+    /**
+     * Returns true if the chart is empty (meaning it's data object is either
+     * null or contains no entries).
+     *
+     * @return
+     */
+    public boolean isEmpty() {
+
+        if (mData == null)
+            return true;
+        else {
+
+            if (mData.getEntriesCount() <= 0)
+                return true;
+            else
+                return false;
+        }
+    }
+
+    /**
+     * calcualtes the y-min and y-max value and the y-delta and x-delta value
+     */
+    protected void calcMinMax(boolean fixedValues) {
+        // only calculate values if not fixed values
+        if (!fixedValues) {
+            mYChartMin = mData.getYMin();
+            mYChartMax = mData.getYMax();
+            mXChartMin = mData.getXMin();
+            mXChartMax = mData.getXMax();
+        }
+
+        // calc delta
+        mDeltaY = Math.abs(mYChartMax - mYChartMin);
+        mDeltaX = Math.abs(mXChartMax - mXChartMin);
+
+        if (!fixedValues) {
+
+            // additional handling for space (default 15% space)
+            // float space = Math.abs(mDeltaY / 100f * 15f);
+            float space = Math
+                    .abs(Math.abs(Math.max(Math.abs(mYChartMax), Math.abs(mYChartMin))) / 100f * 20f);
+
+            if (Math.abs(mYChartMax - mYChartMin) < 0.00001f) {
+                if (Math.abs(mYChartMax) < 10f)
+                    space = 1f;
+                else
+                    space = Math.abs(mYChartMax / 100f * 20f);
+            }
+
+            if (mStartAtZero) {
+
+                if (mYChartMax < 0) {
+                    mYChartMax = 0;
+                    // calc delta
+                    mYChartMin = mYChartMin - space;
+                } else {
+                    mYChartMin = 0;
+                    // calc delta
+                    mYChartMax = mYChartMax + space;
+                }
+            } else {
+
+                mYChartMin = mYChartMin - space / 2f;
+                mYChartMax = mYChartMax + space / 2f;
+            }
+
+            space = Math
+                    .abs(Math.abs(Math.max(Math.abs(mXChartMax), Math.abs(mXChartMin))) / 100f * 20f);
+
+            if (Math.abs(mXChartMax - mXChartMin) < 0.00001f) {
+                if (Math.abs(mXChartMax) < 10f)
+                    space = 1f;
+                else
+                    space = Math.abs(mXChartMax / 100f * 20f);
+            }
+
+            if (mStartAtZero) {
+
+                if (mXChartMax < 0) {
+                    mXChartMax = 0;
+                    // calc delta
+                    mXChartMin = mXChartMin - space;
+                } else {
+                    mXChartMin = 0;
+                    // calc delta
+                    mXChartMax = mXChartMax + space;
+                }
+            } else {
+
+                mXChartMin = mXChartMin - space / 2f;
+                mXChartMax = mXChartMax + space / 2f;
+            }
+        }
+
+        mDeltaY = Math.abs(mYChartMax - mYChartMin);
+        mDeltaX = Math.abs(mXChartMax - mXChartMin);
+    }
+
+    /**
+     * calculates the required number of digits for the values that might be
+     * drawn in the chart (if enabled)
+     */
+    protected void calcFormats() {
+
+        // check if a custom formatter is set or not
+        if (mUseDefaultFormatter) {
+
+            float reference = 0f;
+
+            if (mData == null || mData.getEntriesCount() < 2) {
+
+                reference = Math.max(Math.abs(mYChartMin), Math.abs(mYChartMax));
+            } else {
+                reference = mDeltaY;
+            }
+
+            int digits = Utils.getDecimals(reference);
+
+            StringBuffer b = new StringBuffer();
+            for (int i = 0; i < digits; i++) {
+                if (i == 0)
+                    b.append(".");
+                b.append("0");
+            }
+
+            DecimalFormat formatter = new DecimalFormat("###,###,###,##0" + b.toString());
+            mValueFormatter = new DefaultValueFormatter(formatter);
+        }
+    }
+
+
     @Override
     protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
+        if (mDataNotSet) { // check if there is data
+
+            canvas.drawText(mNoDataText, getWidth() / 2, getHeight() / 2, mInfoPaint);
+
+            if (!TextUtils.isEmpty(mNoDataTextDescription)) {
+                float textOffset = -mInfoPaint.ascent() + mInfoPaint.descent();
+                canvas.drawText(mNoDataTextDescription, getWidth() / 2, (getHeight() / 2)
+                        + textOffset, mInfoPaint);
+            }
+            return;
+        }
+
+        if (!mOffsetsCalculated) {
+
+            calculateOffsets();
+            mOffsetsCalculated = true;
+        }
+
+        if (mDrawBitmap == null || mDrawCanvas == null) {
+
+            mDrawBitmap = Bitmap.createBitmap(getWidth(), getHeight(),
+                    Bitmap.Config.ARGB_4444);
+            mDrawCanvas = new Canvas(mDrawBitmap);
+        }
+
+        // clear everything
+        mDrawBitmap.eraseColor(Color.TRANSPARENT);
 
         if (mDataNotSet)
             return;
 
         long starttime = System.currentTimeMillis();
 
-            mData = getData();
-
-        if (mXLabels.isAdjustXLabelsEnabled())
-            calcModulus();
+        mData = getData();
 
         // execute all drawing commands
         drawGridBackground();
 
         prepareYLabels();
+        prepareXLabels();
 
         // make sure the graph values and grid cannot be drawn outside the
         // content-rect
@@ -214,10 +761,1573 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     }
 
     /**
+     * sets up the content rect that restricts the chart surface
+     */
+    protected void prepareContentRect() {
+
+        mContentRect.set(mOffsetLeft,
+                mOffsetTop,
+                getWidth() - mOffsetRight,
+                getHeight() - mOffsetBottom);
+    }
+
+    /**
+     * Generates an automatically prepared legend depending on the DataSets in
+     * the chart and their colors.
+     */
+    public void prepareLegend() {
+
+        ArrayList<String> labels = new ArrayList<String>();
+        ArrayList<Integer> colors = new ArrayList<Integer>();
+
+        // loop for building up the colors and labels used in the legend
+        for (int i = 0; i < mData.getDataSetCount(); i++) {
+
+            DecartDataSet<? extends DecartEntry> dataSet = mData.getDataSetByIndex(i);
+
+            ArrayList<Integer> clrs = dataSet.getColors();
+            int entryCount = dataSet.getEntryCount();
+
+            // if we have a barchart with stacked bars
+            for (int j = 0; j < clrs.size() && j < entryCount; j++) {
+
+                // if multiple colors are set for a DataSet, group them
+                if (j < clrs.size() - 1 && j < entryCount - 1) {
+
+                    labels.add(null);
+                } else { // add label to the last entry
+
+                    String label = mData.getDataSetByIndex(i).getLabel();
+                    labels.add(label);
+                }
+
+                colors.add(clrs.get(j));
+            }
+        }
+
+        Legend l = new Legend(colors, labels);
+
+        if (mLegend != null) {
+            // apply the old legend settings to a potential new legend
+            l.apply(mLegend);
+        }
+
+        mLegend = l;
+    }
+
+    /**
+     * draws the legend
+     */
+    protected void drawLegend() {
+
+        if (!mDrawLegend || mLegend == null || mLegend.getPosition() == LegendPosition.NONE)
+            return;
+
+        String[] labels = mLegend.getLegendLabels();
+        Typeface tf = mLegend.getTypeface();
+
+        if (tf != null)
+            mLegendLabelPaint.setTypeface(tf);
+
+        mLegendLabelPaint.setTextSize(mLegend.getTextSize());
+        mLegendLabelPaint.setColor(mLegend.getTextColor());
+
+        float formSize = mLegend.getFormSize();
+
+        // space between text and shape/form of entry
+        float formTextSpaceAndForm = mLegend.getFormToTextSpace() + formSize;
+
+        // space between the entries
+        float stackSpace = mLegend.getStackSpace();
+
+        float textSize = mLegend.getTextSize();
+
+        // the amount of pixels the text needs to be set down to be on the same
+        // height as the form
+        float textDrop = (Utils.calcTextHeight(mLegendLabelPaint, "AQJ") + formSize) / 2f;
+
+        float posX, posY;
+
+        // contains the stacked legend size in pixels
+        float stack = 0f;
+
+        boolean wasStacked = false;
+
+        switch (mLegend.getPosition()) {
+            case BELOW_CHART_LEFT:
+
+                posX = mLegend.getOffsetLeft();
+                posY = getHeight() - mLegend.getOffsetBottom() / 2f - formSize / 2f;
+
+                for (int i = 0; i < labels.length; i++) {
+
+                    mLegend.drawForm(mDrawCanvas, posX, posY, mLegendFormPaint, i);
+
+                    // grouped forms have null labels
+                    if (labels[i] != null) {
+
+                        // make a step to the left
+                        if (mLegend.getColors()[i] != -2)
+                            posX += formTextSpaceAndForm;
+
+                        mLegend.drawLabel(mDrawCanvas, posX, posY + textDrop, mLegendLabelPaint, i);
+                        posX += Utils.calcTextWidth(mLegendLabelPaint, labels[i])
+                                + mLegend.getXEntrySpace();
+                    } else {
+                        posX += formSize + stackSpace;
+                    }
+                }
+
+                break;
+            case BELOW_CHART_RIGHT:
+
+                posX = getWidth() - getOffsetRight();
+                posY = getHeight() - mLegend.getOffsetBottom() / 2f - formSize / 2f;
+
+                for (int i = labels.length - 1; i >= 0; i--) {
+
+                    if (labels[i] != null) {
+
+                        posX -= Utils.calcTextWidth(mLegendLabelPaint, labels[i])
+                                + mLegend.getXEntrySpace();
+                        mLegend.drawLabel(mDrawCanvas, posX, posY + textDrop, mLegendLabelPaint, i);
+                        if (mLegend.getColors()[i] != -2)
+                            posX -= formTextSpaceAndForm;
+                    } else {
+                        posX -= stackSpace + formSize;
+                    }
+
+                    mLegend.drawForm(mDrawCanvas, posX, posY, mLegendFormPaint, i);
+                }
+
+                break;
+            case RIGHT_OF_CHART:
+
+                posX = getWidth() - mLegend.getMaximumEntryLength(mLegendLabelPaint)
+                        - formTextSpaceAndForm;
+                posY = mLegend.getOffsetTop();
+
+                for (int i = 0; i < labels.length; i++) {
+
+                    mLegend.drawForm(mDrawCanvas, posX + stack, posY, mLegendFormPaint, i);
+
+                    if (labels[i] != null) {
+
+                        if (!wasStacked) {
+
+                            float x = posX;
+
+                            if (mLegend.getColors()[i] != -2)
+                                x += formTextSpaceAndForm;
+
+                            posY += textDrop;
+
+                            mLegend.drawLabel(mDrawCanvas, x, posY,
+                                    mLegendLabelPaint, i);
+                        } else {
+
+                            posY += textSize * 1.2f + formSize;
+
+                            mLegend.drawLabel(mDrawCanvas, posX, posY,
+                                    mLegendLabelPaint, i);
+
+                        }
+
+                        // make a step down
+                        posY += mLegend.getYEntrySpace();
+                        stack = 0f;
+                    } else {
+                        stack += formSize + stackSpace;
+                        wasStacked = true;
+                    }
+                }
+                break;
+            case RIGHT_OF_CHART_CENTER:
+                posX = getWidth() - mLegend.getMaximumEntryLength(mLegendLabelPaint)
+                        - formTextSpaceAndForm;
+                posY = getHeight() / 2f - mLegend.getFullHeight(mLegendLabelPaint) / 2f;
+
+                for (int i = 0; i < labels.length; i++) {
+
+                    mLegend.drawForm(mDrawCanvas, posX + stack, posY, mLegendFormPaint, i);
+
+                    if (labels[i] != null) {
+
+                        if (!wasStacked) {
+
+                            float x = posX;
+
+                            if (mLegend.getColors()[i] != -2)
+                                x += formTextSpaceAndForm;
+
+                            posY += textDrop;
+
+                            mLegend.drawLabel(mDrawCanvas, x, posY,
+                                    mLegendLabelPaint, i);
+                        } else {
+
+                            posY += textSize * 1.2f + formSize;
+
+                            mLegend.drawLabel(mDrawCanvas, posX, posY,
+                                    mLegendLabelPaint, i);
+
+                        }
+
+                        // make a step down
+                        posY += mLegend.getYEntrySpace();
+                        stack = 0f;
+                    } else {
+                        stack += formSize + stackSpace;
+                        wasStacked = true;
+                    }
+                }
+
+                break;
+            case BELOW_CHART_CENTER:
+
+                float fullSize = mLegend.getFullWidth(mLegendLabelPaint);
+
+                posX = getWidth() / 2f - fullSize / 2f;
+                posY = getHeight() - mLegend.getOffsetBottom() / 2f - formSize / 2f;
+
+                for (int i = 0; i < labels.length; i++) {
+
+                    mLegend.drawForm(mDrawCanvas, posX, posY, mLegendFormPaint, i);
+
+                    // grouped forms have null labels
+                    if (labels[i] != null) {
+
+                        // make a step to the left
+                        if (mLegend.getColors()[i] != -2)
+                            posX += formTextSpaceAndForm;
+
+                        mLegend.drawLabel(mDrawCanvas, posX, posY + textDrop, mLegendLabelPaint, i);
+                        posX += Utils.calcTextWidth(mLegendLabelPaint, labels[i])
+                                + mLegend.getXEntrySpace();
+                    } else {
+                        posX += formSize + stackSpace;
+                    }
+                }
+
+                Log.i(LOG_TAG, "content bottom: " + mContentRect.bottom + ", height: "
+                        + getHeight() + ", posY: " + posY + ", formSize: " + formSize);
+
+                break;
+            case PIECHART_CENTER:
+
+                posX = getWidth()
+                        / 2f
+                        - (mLegend.getMaximumEntryLength(mLegendLabelPaint) + mLegend
+                        .getXEntrySpace())
+                        / 2f;
+                posY = getHeight() / 2f - mLegend.getFullHeight(mLegendLabelPaint) / 2f;
+
+                for (int i = 0; i < labels.length; i++) {
+
+                    mLegend.drawForm(mDrawCanvas, posX + stack, posY, mLegendFormPaint, i);
+
+                    if (labels[i] != null) {
+
+                        if (!wasStacked) {
+
+                            float x = posX;
+
+                            if (mLegend.getColors()[i] != -2)
+                                x += formTextSpaceAndForm;
+
+                            posY += textDrop;
+
+                            mLegend.drawLabel(mDrawCanvas, x, posY,
+                                    mLegendLabelPaint, i);
+                        } else {
+
+                            posY += textSize * 1.2f + formSize;
+
+                            mLegend.drawLabel(mDrawCanvas, posX, posY,
+                                    mLegendLabelPaint, i);
+
+                        }
+
+                        // make a step down
+                        posY += mLegend.getYEntrySpace();
+                        stack = 0f;
+                    } else {
+                        stack += formSize + stackSpace;
+                        wasStacked = true;
+                    }
+                }
+
+                break;
+            case RIGHT_OF_CHART_INSIDE:
+
+                posX = getWidth() - mLegend.getMaximumEntryLength(mLegendLabelPaint)
+                        - formTextSpaceAndForm;
+                posY = mLegend.getOffsetTop();
+
+                for (int i = 0; i < labels.length; i++) {
+
+                    mLegend.drawForm(mDrawCanvas, posX + stack, posY, mLegendFormPaint, i);
+
+                    if (labels[i] != null) {
+
+                        if (!wasStacked) {
+
+                            float x = posX;
+
+                            if (mLegend.getColors()[i] != -2)
+                                x += formTextSpaceAndForm;
+
+                            posY += textDrop;
+
+                            mLegend.drawLabel(mDrawCanvas, x, posY,
+                                    mLegendLabelPaint, i);
+                        } else {
+
+                            posY += textSize * 1.2f + formSize;
+
+                            mLegend.drawLabel(mDrawCanvas, posX, posY,
+                                    mLegendLabelPaint, i);
+
+                        }
+
+                        // make a step down
+                        posY += mLegend.getYEntrySpace();
+                        stack = 0f;
+                    } else {
+                        stack += formSize + stackSpace;
+                        wasStacked = true;
+                    }
+                }
+                break;
+            case NONE:
+                break;
+        }
+    }
+
+    /**
+     * draws the description text in the bottom right corner of the chart
+     */
+    protected void drawDescription() {
+
+        mDrawCanvas
+                .drawText(mDescription, getWidth() - mOffsetRight - 10, getHeight() - mOffsetBottom
+                        - 10, mDescPaint);
+    }
+
+    /**
+     * draws all the text-values to the chart
+     */
+    protected abstract void drawValues();
+
+    /**
+     * draws the actual data
+     */
+    protected abstract void drawData();
+
+    /**
+     * draws additional stuff, whatever that might be
+     */
+    protected abstract void drawAdditional();
+
+    /**
+     * draws the values of the chart that need highlightning
+     */
+    protected abstract void drawHighlights();
+
+    /**
+     * ################ ################ ################ ################
+     */
+    /** BELOW THIS CODE FOR HIGHLIGHTING */
+
+    /**
+     * array of Highlight objects that reference the highlighted slices in the
+     * chart
+     */
+    protected Highlight[] mIndicesToHightlight = new Highlight[0];
+
+    /**
+     * Returns true if there are values to highlight, false if there are no
+     * values to highlight. Checks if the highlight array is null, has a length
+     * of zero or if the first object is null.
+     *
+     * @return
+     */
+    public boolean valuesToHighlight() {
+        return mIndicesToHightlight == null || mIndicesToHightlight.length <= 0
+                || mIndicesToHightlight[0] == null ? false
+                : true;
+    }
+
+    /**
+     * Highlights the values at the given indices in the given DataSets. Provide
+     * null or an empty array to undo all highlighting. This should be used to
+     * programmatically highlight values. This DOES NOT generate a callback to
+     * the OnChartValueSelectedListener.
+     *
+     * @param highs
+     */
+    public void highlightValues(Highlight[] highs) {
+
+        // set the indices to highlight
+        mIndicesToHightlight = highs;
+
+        // redraw the chart
+        invalidate();
+    }
+
+    /**
+     * Highlights the value at the given x-index in the given DataSet. Provide
+     * -1 as the x-index to undo all highlighting.
+     *
+     * @param xIndex
+     * @param dataSetIndex
+     */
+    public void highlightValue(int xIndex, int dataSetIndex) {
+        throw new RuntimeException("todo");
+//        if (xIndex < 0 || dataSetIndex < 0 || xIndex >= mData.getXValCount()
+//                || dataSetIndex >= mData.getDataSetCount()) {
+//
+//            highlightValues(null);
+//        } else {
+//            highlightValues(new Highlight[]{
+//                    new Highlight(xIndex, dataSetIndex)
+//            });
+//        }
+    }
+
+    /**
+     * Highlights the value selected by touch gesture. Unlike
+     * highlightValues(...), this generates a callback to the
+     * OnChartValueSelectedListener.
+     *
+     * @param highs
+     */
+    public void highlightTouch(Highlight high) {
+
+        if (high == null)
+            mIndicesToHightlight = null;
+        else {
+
+            // set the indices to highlight
+            mIndicesToHightlight = new Highlight[]{
+                    high
+            };
+        }
+
+        // redraw the chart
+        invalidate();
+
+        if (mSelectionListener != null) {
+
+            if (!valuesToHighlight())
+                mSelectionListener.onNothingSelected();
+            else {
+
+                Entry e = getEntryByDataSetIndex(high.getXIndex(),
+                        high.getDataSetIndex());
+
+                // notify the listener
+                mSelectionListener.onValueSelected(e, high.getDataSetIndex());
+            }
+        }
+    }
+
+    /**
+     * ################ ################ ################ ################
+     */
+    /** BELOW CODE IS FOR THE MARKER VIEW */
+
+    /**
+     * if set to true, the marker view is drawn when a value is clicked
+     */
+    protected boolean mDrawMarkerViews = true;
+
+    /**
+     * the view that represents the marker
+     */
+    protected MarkerView mMarkerView;
+
+    /**
+     * draws all MarkerViews on the highlighted positions
+     */
+    protected void drawMarkers() {
+
+        // if there is no marker view or drawing marker is disabled
+        if (mMarkerView == null || !mDrawMarkerViews || !valuesToHighlight())
+            return;
+
+        for (int i = 0; i < mIndicesToHightlight.length; i++) {
+
+            int xIndex = mIndicesToHightlight[i].getXIndex();
+            int dataSetIndex = mIndicesToHightlight[i].getDataSetIndex();
+
+            if (xIndex <= mDeltaX && xIndex <= mDeltaX * mPhaseX) {
+
+                Entry e = getEntryByDataSetIndex(xIndex, dataSetIndex);
+
+                // make sure entry not null
+                if (e == null)
+                    continue;
+
+                float[] pos = getMarkerPosition(e, dataSetIndex);
+
+                // check bounds
+                if (pos[0] < mOffsetLeft || pos[0] > getWidth() - mOffsetRight
+                        || pos[1] < mOffsetTop || pos[1] > getHeight() - mOffsetBottom)
+                    continue;
+
+                // callbacks to update the content
+                mMarkerView.refreshContent(e, dataSetIndex);
+
+                // mMarkerView.measure(MeasureSpec.makeMeasureSpec(0,
+                // MeasureSpec.UNSPECIFIED),
+                // MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+                // mMarkerView.layout(0, 0, mMarkerView.getMeasuredWidth(),
+                // mMarkerView.getMeasuredHeight());
+                // mMarkerView.draw(mDrawCanvas, pos[0], pos[1]);
+
+                mMarkerView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+                mMarkerView.layout(0, 0, mMarkerView.getMeasuredWidth(),
+                        mMarkerView.getMeasuredHeight());
+
+                if (pos[1] - mMarkerView.getHeight() <= 0) {
+                    float y = mMarkerView.getHeight() - pos[1];
+                    mMarkerView.draw(mDrawCanvas, pos[0], pos[1] + y);
+                } else {
+                    mMarkerView.draw(mDrawCanvas, pos[0], pos[1]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the actual position in pixels of the MarkerView for the given
+     * Entry in the given DataSet.
+     *
+     * @param xIndex
+     * @param dataSetIndex
+     * @return
+     */
+    private float[] getMarkerPosition(Entry e, int dataSetIndex) {
+
+        float xPos = e.getXIndex();
+
+        // position of the marker depends on selected value index and value
+        float[] pts = new float[]{
+                xPos, e.getVal() * mPhaseY
+        };
+
+        mTrans.pointValuesToPixel(pts);
+
+        return pts;
+    }
+
+    /**
+     * ################ ################ ################ ################
+     * Animation support below Honeycomb thanks to Jake Wharton's awesome
+     * nineoldandroids library: https://github.com/JakeWharton/NineOldAndroids
+     */
+    /** CODE BELOW THIS RELATED TO ANIMATION */
+
+    /**
+     * the phase that is animated and influences the drawn values on the y-axis
+     */
+    protected float mPhaseY = 1f;
+
+    /**
+     * the phase that is animated and influences the drawn values on the x-axis
+     */
+    protected float mPhaseX = 1f;
+
+    /**
+     * objectanimator used for animating values on y-axis
+     */
+    private ObjectAnimator mAnimatorY;
+
+    /**
+     * objectanimator used for animating values on x-axis
+     */
+    private ObjectAnimator mAnimatorX;
+
+    /**
+     * Animates the drawing / rendering of the chart on both x- and y-axis with
+     * the specified animation time. If animate(...) is called, no further
+     * calling of invalidate() is necessary to refresh the chart.
+     *
+     * @param durationMillisX
+     * @param durationMillisY
+     */
+    public void animateXY(int durationMillisX, int durationMillisY) {
+
+        mAnimatorY = ObjectAnimator.ofFloat(this, "phaseY", 0f, 1f);
+        mAnimatorY.setDuration(
+                durationMillisY);
+        mAnimatorX = ObjectAnimator.ofFloat(this, "phaseX", 0f, 1f);
+        mAnimatorX.setDuration(
+                durationMillisX);
+
+        // make sure only one animator produces update-callbacks (which then
+        // call invalidate())
+        if (durationMillisX > durationMillisY) {
+            mAnimatorX.addUpdateListener(this);
+        } else {
+            mAnimatorY.addUpdateListener(this);
+        }
+
+        mAnimatorX.start();
+        mAnimatorY.start();
+    }
+
+    /**
+     * Animates the rendering of the chart on the x-axis with the specified
+     * animation time. If animate(...) is called, no further calling of
+     * invalidate() is necessary to refresh the chart.
+     *
+     * @param durationMillis
+     */
+    public void animateX(int durationMillis) {
+
+        mAnimatorX = ObjectAnimator.ofFloat(this, "phaseX", 0f, 1f);
+        mAnimatorX.setDuration(durationMillis);
+        mAnimatorX.addUpdateListener(this);
+        mAnimatorX.start();
+    }
+
+    /**
+     * Animates the rendering of the chart on the y-axis with the specified
+     * animation time. If animate(...) is called, no further calling of
+     * invalidate() is necessary to refresh the chart.
+     *
+     * @param durationMillis
+     */
+    public void animateY(int durationMillis) {
+
+        mAnimatorY = ObjectAnimator.ofFloat(this, "phaseY", 0f, 1f);
+        mAnimatorY.setDuration(durationMillis);
+        mAnimatorY.addUpdateListener(this);
+        mAnimatorY.start();
+    }
+
+    @Override
+    public void onAnimationUpdate(ValueAnimator va) {
+
+        // redraw everything after animation value change
+        invalidate();
+
+        // Log.i(LOG_TAG, "UPDATING, x: " + mPhaseX + ", y: " + mPhaseY);
+    }
+
+    /**
+     * This gets the y-phase that is used to animate the values.
+     *
+     * @return
+     */
+    public float getPhaseY() {
+        return mPhaseY;
+    }
+
+    /**
+     * This modifys the y-phase that is used to animate the values.
+     *
+     * @param phase
+     */
+    public void setPhaseY(float phase) {
+        mPhaseY = phase;
+    }
+
+    /**
+     * This gets the x-phase that is used to animate the values.
+     *
+     * @return
+     */
+    public float getPhaseX() {
+        return mPhaseX;
+    }
+
+    /**
+     * This modifys the x-phase that is used to animate the values.
+     *
+     * @param phase
+     */
+    public void setPhaseX(float phase) {
+        mPhaseX = phase;
+    }
+
+    /**
+     * ################ ################ ################ ################
+     */
+    /** BELOW THIS ONLY GETTERS AND SETTERS */
+
+    /**
+     * Returns the canvas object the chart uses for drawing.
+     *
+     * @return
+     */
+    public Canvas getCanvas() {
+        return mDrawCanvas;
+    }
+
+    /**
+     * set a selection listener for the chart
+     *
+     * @param l
+     */
+    public void setOnChartValueSelectedListener(OnChartValueSelectedListener l) {
+        this.mSelectionListener = l;
+    }
+
+    /**
+     * Sets a gesture-listener for the chart for custom callbacks when executing
+     * gestures on the chart surface.
+     *
+     * @param l
+     */
+    public void setOnChartGestureListener(OnChartGestureListener l) {
+        this.mGestureListener = l;
+    }
+
+    /**
+     * Returns the custom gesture listener.
+     *
+     * @return
+     */
+    public OnChartGestureListener getOnChartGestureListener() {
+        return mGestureListener;
+    }
+
+    /**
+     * If set to true, value highlighting is enabled which means that values can
+     * be highlighted programmatically or by touch gesture.
+     *
+     * @param enabled
+     */
+    public void setHighlightEnabled(boolean enabled) {
+        mHighlightEnabled = enabled;
+    }
+
+    /**
+     * returns true if highlighting of values is enabled, false if not
+     *
+     * @return
+     */
+    public boolean isHighlightEnabled() {
+        return mHighlightEnabled;
+    }
+
+    /**
+     * returns the total value (sum) of all y-values across all DataSets
+     *
+     * @return
+     */
+    public float getYValueSum() {
+        return mData.getYValueSum();
+    }
+
+    /**
+     * returns the current y-max value across all DataSets
+     *
+     * @return
+     */
+    public float getYMax() {
+        return mData.getYMax();
+    }
+
+    /**
+     * returns the lowest value the chart can display
+     *
+     * @return
+     */
+    @Override
+    public float getYChartMin() {
+        return mYChartMin;
+    }
+
+    /**
+     * returns the highest value the chart can display
+     *
+     * @return
+     */
+    @Override
+    public float getYChartMax() {
+        return mYChartMax;
+    }
+
+    /**
+     * returns the current y-min value across all DataSets
+     *
+     * @return
+     */
+    public float getYMin() {
+        return mData.getYMin();
+    }
+
+    /**
+     * Get the total number of X-values.
+     *
+     * @return
+     */
+    @Override
+    public float getDeltaX() {
+        return mDeltaX;
+    }
+
+    /**
+     * Returns the total range of values (on y-axis) the chart displays.
+     *
+     * @return
+     */
+    @Override
+    public float getDeltaY() {
+        return mDeltaY;
+    }
+
+    /**
+     * returns the average value of all values the chart holds
+     *
+     * @return
+     */
+    public float getAverage() {
+        return getYValueSum() / mData.getEntriesCount();
+    }
+
+    /**
+     * returns the average value for a specific DataSet (with a specific label)
+     * in the chart
+     *
+     * @param dataSetLabel
+     * @return
+     */
+    public float getAverage(String dataSetLabel) {
+
+        DecartDataSet<? extends DecartEntry> ds = mData.getDataSetByLabel(dataSetLabel, true);
+
+        return ds.getYValueSum()
+                / ds.getEntryCount();
+    }
+
+    /**
+     * returns the total number of values the chart holds (across all DataSets)
+     *
+     * @return
+     */
+    public int getEntriesCount() {
+        return mData.getEntriesCount();
+    }
+
+    /**
+     * Returns the center point of the chart (the whole View) in pixels.
+     *
+     * @return
+     */
+    public PointF getCenter() {
+        return new PointF(getWidth() / 2f, getHeight() / 2f);
+    }
+
+    /**
+     * Returns the center of the chart taking offsets under consideration.
+     * (returns the center of the content rectangle)
+     *
+     * @return
+     */
+    public PointF getCenterOffsets() {
+        return new PointF(mContentRect.centerX(), mContentRect.centerY());
+    }
+
+    /**
+     * sets the size of the description text in pixels, min 6f, max 16f
+     *
+     * @param size
+     */
+    public void setDescriptionTextSize(float size) {
+
+        if (size > 16f)
+            size = 16f;
+        if (size < 6f)
+            size = 6f;
+
+        mDescPaint.setTextSize(Utils.convertDpToPixel(size));
+    }
+
+    /**
+     * Set this to true to enable logcat outputs for the chart. Default:
+     * disabled
+     *
+     * @param enabled
+     */
+    public void setLogEnabled(boolean enabled) {
+        mLogEnabled = enabled;
+    }
+
+    /**
+     * set a description text that appears in the bottom right corner of the
+     * chart, size = Y-legend text size
+     *
+     * @param desc
+     */
+    public void setDescription(String desc) {
+        if (desc == null)
+            desc = "";
+        this.mDescription = desc;
+    }
+
+    /**
+     * Sets the text that informs the user that there is no data available with
+     * which to draw the chart.
+     *
+     * @param text
+     */
+    public void setNoDataText(String text) {
+        mNoDataText = text;
+    }
+
+    /**
+     * Sets descriptive text to explain to the user why there is no chart
+     * available Defaults to empty if not set
+     *
+     * @param text
+     */
+    public void setNoDataTextDescription(String text) {
+        mNoDataTextDescription = text;
+    }
+
+    /**
+     * Sets the offsets from the border of the view to the actual chart in every
+     * direction manually. Provide density pixels -> they are then rendered to
+     * pixels inside the chart
+     *
+     * @param left
+     * @param right
+     * @param top
+     * @param bottom
+     */
+    public void setOffsets(float left, float top, float right, float bottom) {
+
+        mOffsetBottom = Utils.convertDpToPixel(bottom);
+        mOffsetLeft = Utils.convertDpToPixel(left);
+        mOffsetRight = Utils.convertDpToPixel(right);
+        mOffsetTop = Utils.convertDpToPixel(top);
+    }
+
+    @Override
+    public float getOffsetLeft() {
+        return mOffsetLeft;
+    }
+
+    @Override
+    public float getOffsetBottom() {
+        return mOffsetBottom;
+    }
+
+    @Override
+    public float getOffsetRight() {
+        return mOffsetRight;
+    }
+
+    @Override
+    public float getOffsetTop() {
+        return mOffsetTop;
+    }
+
+    /**
+     * Set this to false to disable all gestures and touches on the chart,
+     * default: true
+     *
+     * @param enabled
+     */
+    public void setTouchEnabled(boolean enabled) {
+        this.mTouchEnabled = enabled;
+    }
+
+    /**
+     * set this to true to draw y-values on the chart NOTE (for bar and
+     * linechart): if "maxvisiblecount" is reached, no values will be drawn even
+     * if this is enabled
+     *
+     * @param enabled
+     */
+    public void setDrawYValues(boolean enabled) {
+        this.mDrawYValues = enabled;
+    }
+
+    /**
+     * sets the view that is displayed when a value is clicked on the chart
+     *
+     * @param v
+     */
+    public void setMarkerView(MarkerView v) {
+        mMarkerView = v;
+    }
+
+    /**
+     * returns the view that is set as a marker view for the chart
+     *
+     * @return
+     */
+    public MarkerView getMarkerView() {
+        return mMarkerView;
+    }
+
+    /**
+     * if set to true, units are drawn next to values in the chart, default:
+     * false
+     *
+     * @param enabled
+     */
+    public void setDrawUnitsInChart(boolean enabled) {
+        mDrawUnitInChart = enabled;
+    }
+
+    /**
+     * set this to true to draw the legend, false if not
+     *
+     * @param enabled
+     */
+    public void setDrawLegend(boolean enabled) {
+        mDrawLegend = enabled;
+    }
+
+    /**
+     * returns true if drawing the legend is enabled, false if not
+     *
+     * @return
+     */
+    public boolean isDrawLegendEnabled() {
+        return mDrawLegend;
+    }
+
+    /**
+     * Returns the legend object of the chart. This method can be used to
+     * customize the automatically generated legend. IMPORTANT: this will return
+     * null if no data has been set for the chart when calling this method
+     *
+     * @return
+     */
+    public Legend getLegend() {
+        return mLegend;
+    }
+
+    /**
+     * Returns the rectangle that defines the borders of the chart-value surface
+     * (into which the actual values are drawn).
+     *
+     * @return
+     */
+    @Override
+    public RectF getContentRect() {
+        return mContentRect;
+    }
+
+    /**
+     * Returns the Transformer class that contains all matrices and is
+     * responsible for transforming values into pixels on the screen and
+     * backwards.
+     *
+     * @return
+     */
+    public Transformer getTransformer() {
+        return mTrans;
+    }
+
+    /**
+     * disables intercept touchevents
+     */
+    public void disableScroll() {
+        ViewParent parent = getParent();
+        if (parent != null)
+            parent.requestDisallowInterceptTouchEvent(true);
+    }
+
+    /**
+     * enables intercept touchevents
+     */
+    public void enableScroll() {
+        ViewParent parent = getParent();
+        if (parent != null)
+            parent.requestDisallowInterceptTouchEvent(false);
+    }
+
+    /**
+     * paint for the grid lines (only line and barchart)
+     */
+    public static final int PAINT_GRID = 3;
+
+    /**
+     * paint for the grid background (only line and barchart)
+     */
+    public static final int PAINT_GRID_BACKGROUND = 4;
+
+    /**
+     * paint for the y-legend values (only line and barchart)
+     */
+    public static final int PAINT_YLABEL = 5;
+
+    /**
+     * paint for the x-legend values (only line and barchart)
+     */
+    public static final int PAINT_XLABEL = 6;
+
+    /**
+     * paint for the info text that is displayed when there are no values in the
+     * chart
+     */
+    public static final int PAINT_INFO = 7;
+
+    /**
+     * paint for the value text
+     */
+    public static final int PAINT_VALUES = 8;
+
+    /**
+     * paint for the inner circle (linechart)
+     */
+    public static final int PAINT_CIRCLES_INNER = 10;
+
+    /**
+     * paint for the description text in the bottom right corner
+     */
+    public static final int PAINT_DESCRIPTION = 11;
+
+    /**
+     * paint for the line surrounding the chart (only line and barchart)
+     */
+    public static final int PAINT_BORDER = 12;
+
+    /**
+     * paint for the hole in the middle of the pie chart
+     */
+    public static final int PAINT_HOLE = 13;
+
+    /**
+     * paint for the text in the middle of the pie chart
+     */
+    public static final int PAINT_CENTER_TEXT = 14;
+
+    /**
+     * paint for highlightning the values of a linechart
+     */
+    public static final int PAINT_HIGHLIGHT = 15;
+
+    /**
+     * paint object used for the limit lines
+     */
+    public static final int PAINT_RADAR_WEB = 16;
+
+    /**
+     * paint used for all rendering processes
+     */
+    public static final int PAINT_RENDER = 17;
+
+    /**
+     * paint used for the legend
+     */
+    public static final int PAINT_LEGEND_LABEL = 18;
+
+    /**
+     * paint object used for the limit lines
+     */
+    public static final int PAINT_LIMIT_LINE = 19;
+
+    /**
+     * set a new paint object for the specified parameter in the chart e.g.
+     * Chart.PAINT_VALUES
+     *
+     * @param p     the new paint object
+     * @param which Chart.PAINT_VALUES, Chart.PAINT_GRID, Chart.PAINT_VALUES,
+     *              ...
+     */
+    public void setPaint(Paint p, int which) {
+
+        switch (which) {
+            case PAINT_INFO:
+                mInfoPaint = p;
+                break;
+            case PAINT_DESCRIPTION:
+                mDescPaint = p;
+                break;
+            case PAINT_VALUES:
+                mValuePaint = p;
+                break;
+            case PAINT_RENDER:
+                mRenderPaint = p;
+                break;
+            case PAINT_LEGEND_LABEL:
+                mLegendLabelPaint = p;
+                break;
+            case PAINT_XLABEL:
+                mXLabelPaint = p;
+                break;
+            case PAINT_YLABEL:
+                mYLabelPaint = p;
+                break;
+            case PAINT_HIGHLIGHT:
+                mHighlightPaint = p;
+                break;
+            case PAINT_LIMIT_LINE:
+                mLimitLinePaint = p;
+                break;
+        }
+        switch (which) {
+            case PAINT_GRID:
+                mGridPaint = p;
+                break;
+            case PAINT_GRID_BACKGROUND:
+                mGridBackgroundPaint = p;
+                break;
+            case PAINT_BORDER:
+                mBorderPaint = p;
+                break;
+        }
+    }
+
+    /**
+     * Returns the paint object associated with the provided constant.
+     *
+     * @param which e.g. Chart.PAINT_LEGEND_LABEL
+     * @return
+     */
+    public Paint getPaint(int which) {
+        switch (which) {
+            case PAINT_INFO:
+                return mInfoPaint;
+            case PAINT_DESCRIPTION:
+                return mDescPaint;
+            case PAINT_VALUES:
+                return mValuePaint;
+            case PAINT_RENDER:
+                return mRenderPaint;
+            case PAINT_LEGEND_LABEL:
+                return mLegendLabelPaint;
+            case PAINT_XLABEL:
+                return mXLabelPaint;
+            case PAINT_YLABEL:
+                return mYLabelPaint;
+            case PAINT_HIGHLIGHT:
+                return mHighlightPaint;
+            case PAINT_LIMIT_LINE:
+                return mLimitLinePaint;
+        }
+        Paint p = getPaint(which);
+        if (p != null)
+            return p;
+
+        switch (which) {
+            case PAINT_GRID:
+                return mGridPaint;
+            case PAINT_GRID_BACKGROUND:
+                return mGridBackgroundPaint;
+            case PAINT_BORDER:
+                return mBorderPaint;
+        }
+
+        return null;
+    }
+
+    /**
+     * returns true if drawing the marker-view is enabled when tapping on values
+     * (use the setMarkerView(View v) method to specify a marker view)
+     *
+     * @return
+     */
+    public boolean isDrawMarkerViewEnabled() {
+        return mDrawMarkerViews;
+    }
+
+    /**
+     * Set this to true to draw a user specified marker-view when tapping on
+     * chart values (use the setMarkerView(MarkerView mv) method to specify a
+     * marker view). Default: true
+     *
+     * @param enabled
+     */
+    public void setDrawMarkerViews(boolean enabled) {
+        mDrawMarkerViews = enabled;
+    }
+
+    /**
+     * Sets the formatter to be used for drawing the values inside the chart. If
+     * no formatter is set, the chart will automatically determine a reasonable
+     * formatting (concerning decimals) for all the values that are drawn inside
+     * the chart. Set this to NULL to re-enable auto formatting.
+     *
+     * @param f
+     */
+    public void setValueFormatter(ValueFormatter f) {
+        mValueFormatter = f;
+
+        if (f == null)
+            mUseDefaultFormatter = true;
+        else
+            mUseDefaultFormatter = false;
+    }
+
+    /**
+     * Returns the formatter used for drawing the values inside the chart.
+     *
+     * @return
+     */
+    public ValueFormatter getValueFormatter() {
+        return mValueFormatter;
+    }
+
+    /**
+     * sets the draw color for the value paint object
+     *
+     * @param color
+     */
+    public void setValueTextColor(int color) {
+        mValuePaint.setColor(color);
+    }
+
+    /**
+     * Sets the font size of the values that are drawn inside the chart.
+     *
+     * @param size
+     */
+    public void setValueTextSize(float size) {
+        mValuePaint.setTextSize(Utils.convertDpToPixel(size));
+    }
+
+    /**
+     * returns true if y-value drawing is enabled, false if not
+     *
+     * @return
+     */
+    public boolean isDrawYValuesEnabled() {
+        return mDrawYValues;
+    }
+
+    /**
+     * Returns the ChartData object that ORIGINALLY has been set for the chart.
+     * It contains all data in an unaltered state, before any filtering
+     * algorithms have been applied.
+     *
+     * @return
+     */
+    public T getData() {
+        return mData;
+    }
+
+    /**
+     * returns the percentage the given value has of the total y-value sum
+     *
+     * @param val
+     * @return
+     */
+    public float getPercentOfTotal(float val) {
+        return val / mData.getYValueSum() * 100f;
+    }
+
+    /**
+     * sets a typeface for the value-paint
+     *
+     * @param t
+     */
+    public void setValueTypeface(Typeface t) {
+        mValuePaint.setTypeface(t);
+    }
+
+    /**
+     * sets the typeface for the description paint
+     *
+     * @param t
+     */
+    public void setDescriptionTypeface(Typeface t) {
+        mDescPaint.setTypeface(t);
+    }
+
+    /**
+     * Returns the bitmap that represents the chart.
+     *
+     * @return
+     */
+    public Bitmap getChartBitmap() {
+        // Define a bitmap with the same size as the view
+        Bitmap returnedBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.RGB_565);
+        // Bind a canvas to it
+        Canvas canvas = new Canvas(returnedBitmap);
+        // Get the view's background
+        Drawable bgDrawable = getBackground();
+        if (bgDrawable != null)
+            // has background drawable, then draw it on the canvas
+            bgDrawable.draw(canvas);
+        else
+            // does not have background drawable, then draw white background on
+            // the canvas
+            canvas.drawColor(Color.WHITE);
+        // draw the view on the canvas
+        draw(canvas);
+        // return the bitmap
+        return returnedBitmap;
+    }
+
+    /**
+     * Saves the current chart state with the given name to the given path on
+     * the sdcard leaving the path empty "" will put the saved file directly on
+     * the SD card chart is saved as a PNG image, example:
+     * saveToPath("myfilename", "foldername1/foldername2");
+     *
+     * @param title
+     * @param pathOnSD e.g. "folder1/folder2/folder3"
+     * @return returns true on success, false on error
+     */
+    public boolean saveToPath(String title, String pathOnSD) {
+
+        Bitmap b = getChartBitmap();
+
+        OutputStream stream = null;
+        try {
+            stream = new FileOutputStream(Environment.getExternalStorageDirectory().getPath()
+                    + pathOnSD + "/" + title
+                    + ".png");
+
+            /*
+             * Write bitmap to file using JPEG or PNG and 40% quality hint for
+             * JPEG.
+             */
+            b.compress(Bitmap.CompressFormat.PNG, 40, stream);
+
+            stream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Saves the current state of the chart to the gallery as a JPEG image. The
+     * filename and compression can be set. 0 == maximum compression, 100 = low
+     * compression (high quality). NOTE: Needs permission WRITE_EXTERNAL_STORAGE
+     *
+     * @param fileName e.g. "my_image"
+     * @param quality  e.g. 50, min = 0, max = 100
+     * @return returns true if saving was successfull, false if not
+     */
+    public boolean saveToGallery(String fileName, int quality) {
+
+        // restrain quality
+        if (quality < 0 || quality > 100)
+            quality = 50;
+
+        long currentTime = System.currentTimeMillis();
+
+        File extBaseDir = Environment.getExternalStorageDirectory();
+        File file = new File(extBaseDir.getAbsolutePath() + "/DCIM");
+        if (!file.exists()) {
+            if (!file.mkdirs()) {
+                return false;
+            }
+        }
+
+        String filePath = file.getAbsolutePath() + "/" + fileName;
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(filePath);
+
+            Bitmap b = getChartBitmap();
+
+            b.compress(Bitmap.CompressFormat.JPEG, quality, out); // control
+            // the jpeg
+            // quality
+
+            out.flush();
+            out.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+
+            return false;
+        }
+
+        long size = new File(filePath).length();
+
+        ContentValues values = new ContentValues(8);
+
+        // store the details
+        values.put(MediaStore.Images.Media.TITLE, fileName);
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+        values.put(MediaStore.Images.Media.DATE_ADDED, currentTime);
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+        values.put(MediaStore.Images.Media.DESCRIPTION, "MPAndroidChart-Library Save");
+        values.put(MediaStore.Images.Media.ORIENTATION, 0);
+        values.put(MediaStore.Images.Media.DATA, filePath);
+        values.put(MediaStore.Images.Media.SIZE, size);
+
+        return getContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) == null
+                ? false : true;
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+
+        prepareContentRect();
+        for (int i = 0; i < getChildCount(); i++) {
+            getChildAt(i).layout(left, top, right, bottom);
+        }
+        //
+        // prepareContentRect();
+        // Log.i(LOG_TAG,
+        // "onLayout(), width: " + mContentRect.width() + ", height: " +
+        // mContentRect.height());
+        //
+        // calculateOffsets();
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        if (w > 0 && h > 0) {
+            // create a new bitmap with the new dimensions
+            mDrawBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_4444);
+            mDrawCanvas = new Canvas(mDrawBitmap);
+        }
+
+        // prepare content rect and matrices
+        prepareContentRect();
+        prepare();
+
+        super.onSizeChanged(w, h, oldw, oldh);
+    }
+
+    /**
+     * Default formatter used for formatting values. Uses a DecimalFormat with
+     * pre-calculated number of digits (depending on max and min value).
+     *
+     * @author Philipp Jahoda
+     */
+    private class DefaultValueFormatter implements ValueFormatter {
+
+        /**
+         * decimalformat for formatting
+         */
+        private DecimalFormat mFormat;
+
+        public DefaultValueFormatter(DecimalFormat f) {
+            mFormat = f;
+        }
+
+        @Override
+        public String getFormattedValue(float value) {
+            // avoid memory allocations here (for performance)
+            return mFormat.format(value);
+        }
+    }
+
+    @Override
+    public View getChartView() {
+        return this;
+    }
+
+    /**
      * does all necessary preparations, needed when data is changed or flags
      * that effect the data are changed
      */
-    @Override
     public void prepare() {
 
         if (mDataNotSet)
@@ -248,7 +2358,6 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
             Log.i(LOG_TAG, "Matrices prepared.");
     }
 
-    @Override
     public void notifyDataSetChanged() {
         if (!mFixedYValues) {
             prepare();
@@ -259,7 +2368,6 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
         }
     }
 
-    @Override
     protected void calculateOffsets() {
 
         float legendRight = 0f, legendBottom = 0f;
@@ -300,7 +2408,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
         // calculate the maximum y-label width (including eventual offsets)
         float ylabelwidth = Utils.calcTextWidth(mYLabelPaint,
-                label + mUnit + (mYChartMin < 0 ? "----" : "+++")); // offsets
+                label + (mYChartMin < 0 ? "----" : "+++")); // offsets
 
         if (mDrawYLabels) {
 
@@ -391,58 +2499,6 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     }
 
     /**
-     * calculates the modulus for x-labels and grid
-     */
-    protected void calcModulus() {
-
-        float[] values = new float[9];
-        mTrans.getTouchMatrix().getValues(values);
-
-        mXLabels.mXAxisLabelModulus = (int) Math
-                .ceil((mData.getXValCount() * mXLabels.mLabelWidth)
-                        / (mContentRect.width() * values[Matrix.MSCALE_X]));
-    }
-
-    @Override
-    protected void calcMinMax(boolean fixedValues) {
-        super.calcMinMax(fixedValues); // calc min and max in the super class
-
-        if (!fixedValues) {
-
-            // additional handling for space (default 15% space)
-            // float space = Math.abs(mDeltaY / 100f * 15f);
-            float space = Math
-                    .abs(Math.abs(Math.max(Math.abs(mYChartMax), Math.abs(mYChartMin))) / 100f * 20f);
-
-            if (Math.abs(mYChartMax - mYChartMin) < 0.00001f) {
-                if (Math.abs(mYChartMax) < 10f)
-                    space = 1f;
-                else
-                    space = Math.abs(mYChartMax / 100f * 20f);
-            }
-
-            if (mStartAtZero) {
-
-                if (mYChartMax < 0) {
-                    mYChartMax = 0;
-                    // calc delta
-                    mYChartMin = mYChartMin - space;
-                } else {
-                    mYChartMin = 0;
-                    // calc delta
-                    mYChartMax = mYChartMax + space;
-                }
-            } else {
-
-                mYChartMin = mYChartMin - space / 2f;
-                mYChartMax = mYChartMax + space / 2f;
-            }
-        }
-
-        mDeltaY = Math.abs(mYChartMax - mYChartMin);
-    }
-
-    /**
      * setup the x-axis labels
      */
     protected void prepareXLabels() {
@@ -464,7 +2520,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
      * Sets up the y-axis labels. Computes the desired number of labels between
      * the two given extremes. Unlike the papareXLabels() method, this method
      * needs to be called upon every refresh of the view.
-     * 
+     *
      * @return
      */
     protected void prepareYLabels() {
@@ -510,7 +2566,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
         double range = Math.abs(yMax - yMin);
 
         if (labelCount == 0 || range <= 0) {
-            mYLabels.mEntries = new float[] {};
+            mYLabels.mEntries = new float[]{};
             mYLabels.mEntryCount = 0;
             return;
         }
@@ -603,13 +2659,13 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * draws the x-labels on the specified y-position
-     * 
+     *
      * @param yPos
      */
     protected void drawXLabels(float yPos) {
 
         // pre allocate to save performance (dont allocate in loop)
-        float[] position = new float[] {
+        float[] position = new float[]{
                 0f, 0f
         };
 
@@ -712,7 +2768,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * draws the y-labels on the specified x-position
-     * 
+     *
      * @param xPos
      * @param positions
      */
@@ -735,7 +2791,9 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
         }
     }
 
-    /** enums for all different border styles */
+    /**
+     * enums for all different border styles
+     */
     public enum BorderPosition {
         LEFT, RIGHT, TOP, BOTTOM
     }
@@ -743,7 +2801,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * array that holds positions where to draw the chart border lines
      */
-    private BorderPosition[] mBorderPositions = new BorderPosition[] {
+    private BorderPosition[] mBorderPositions = new BorderPosition[]{
             BorderPosition.BOTTOM
     };
 
@@ -829,7 +2887,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
         if (!mDrawVerticalGrid || mData == null)
             return;
 
-        float[] position = new float[] {
+        float[] position = new float[]{
                 0f, 0f
         };
 
@@ -896,13 +2954,13 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
                     mValuePaint.setTextAlign(Align.RIGHT);
                     mDrawCanvas.drawText(label, getWidth() - mOffsetRight
-                            - xOffset,
+                                    - xOffset,
                             pos.y - yOffset, mValuePaint);
 
                 } else {
                     mValuePaint.setTextAlign(Align.LEFT);
                     mDrawCanvas.drawText(label, mOffsetLeft
-                            + xOffset,
+                                    + xOffset,
                             pos.y - yOffset, mValuePaint);
                 }
 
@@ -914,7 +2972,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * returns true if the specified point (x-axis) exceeds the limits of what
      * is visible to the right side
-     * 
+     *
      * @param v
      * @return
      */
@@ -928,7 +2986,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * returns true if the specified point (x-axis) exceeds the limits of what
      * is visible to the left side
-     * 
+     *
      * @param v
      * @return
      */
@@ -942,7 +3000,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * returns true if the specified point (y-axis) exceeds the limits of what
      * is visible on the top
-     * 
+     *
      * @param v
      * @return
      */
@@ -956,7 +3014,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * returns true if the specified point (y-axis) exceeds the limits of what
      * is visible on the bottom
-     * 
+     *
      * @param v
      * @return
      */
@@ -967,7 +3025,9 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
             return false;
     }
 
-    /** touchlistener that handles touches and gestures on the chart */
+    /**
+     * touchlistener that handles touches and gestures on the chart
+     */
     protected OnTouchListener mListener;
 
     @Override
@@ -1008,7 +3068,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * Zooms in or out by the given scale factor. x and y are the coordinates
      * (in pixels) of the zoom center.
-     * 
+     *
      * @param scaleX if < 1f --> zoom out, if > 1f --> zoom in
      * @param scaleY if < 1f --> zoom out, if > 1f --> zoom in
      * @param x
@@ -1031,7 +3091,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * If this is set to true, the y-axis is inverted which means that low
      * values are on top of the chart, high values on bottom.
-     * 
+     *
      * @param enabled
      */
     public void setInvertYAxisEnabled(boolean enabled) {
@@ -1040,7 +3100,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * If this returns true, the y-axis is inverted.
-     * 
+     *
      * @return
      */
     public boolean isInvertYAxisEnabled() {
@@ -1053,9 +3113,9 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
      * chart is not possible. Makes most sense in combination with the
      * setScaleMinima(...) method. First set the scale minima, then center the
      * viewport. SHOULD BE CALLED AFTER setting data for the chart.
-     * 
+     *
      * @param xIndex the index on the x-axis to center to
-     * @param yVal the value ont he y-axis to center to
+     * @param yVal   the value ont he y-axis to center to
      */
     public synchronized void centerViewPort(final int xIndex, final float yVal) {
 
@@ -1065,7 +3125,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
         Log.i(LOG_TAG, "indices: " + indicesInView + ", vals: " +
                 valsInView);
 
-        float[] pts = new float[] {
+        float[] pts = new float[]{
                 xIndex - indicesInView / 2f, yVal + valsInView / 2f
         };
 
@@ -1080,7 +3140,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * set a new (e.g. custom) charttouchlistener NOTE: make sure to
      * setTouchEnabled(true); if you need touch gestures on the chart
-     * 
+     *
      * @param l
      */
     public void setOnTouchListener(OnTouchListener l) {
@@ -1089,7 +3149,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * Sets the OnDrawListener
-     * 
+     *
      * @param drawListener
      */
     public void setOnDrawListener(OnDrawListener drawListener) {
@@ -1098,7 +3158,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * Gets the OnDrawListener. May be null.
-     * 
+     *
      * @return
      */
     public OnDrawListener getDrawListener() {
@@ -1109,7 +3169,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
      * Sets the minimum scale values for both axes. This limits the extent to
      * which the user can zoom-out. Scale 2f means the user cannot zoom out
      * further than 2x zoom, ... Min = 1f
-     * 
+     *
      * @param scaleXmin
      * @param scaleYmin
      */
@@ -1123,11 +3183,11 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
      * recalculation of the bounds of the chart concerning the y-axis will be
      * done when adding new data. To disable this, provide Float.NaN as a
      * parameter or call resetYRange();
-     * 
+     *
      * @param minY
      * @param maxY
      * @param invalidate if set to true, the chart will redraw itself after
-     *            calling this method
+     *                   calling this method
      */
     public void setYRange(float minY, float maxY, boolean invalidate) {
 
@@ -1154,9 +3214,9 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * Resets the previously set y range. If new data is added, the y-range will
      * be recalculated.
-     * 
+     *
      * @param invalidate if set to true, the chart will redraw itself after
-     *            calling this method
+     *                   calling this method
      */
     public void resetYRange(boolean invalidate) {
         mFixedYValues = false;
@@ -1170,7 +3230,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * if this returns true, the chart has a fixed range on the y-axis that is
      * not dependant on the actual data in the chart
-     * 
+     *
      * @return
      */
     public boolean hasFixedYValues() {
@@ -1180,7 +3240,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * Returns the position (in pixels) the provided Entry has inside the chart
      * view or null, if the provided Entry is null.
-     * 
+     *
      * @param e
      * @return
      */
@@ -1189,7 +3249,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
         if (e == null)
             return null;
 
-        float[] vals = new float[] {
+        float[] vals = new float[]{
                 e.getXIndex(), e.getVal()
         };
 
@@ -1207,7 +3267,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * sets the color for the grid lines
-     * 
+     *
      * @param color
      */
     public void setGridColor(int color) {
@@ -1217,7 +3277,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * sets the number of maximum visible drawn values on the chart only active
      * when setDrawValues() is enabled
-     * 
+     *
      * @param count
      */
     public void setMaxVisibleValueCount(int count) {
@@ -1229,7 +3289,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
      * LineChart and ScatterChart, dark bar overlay for BarChart) that give
      * visual indication that an Entry has been selected will be drawn upon
      * selecting values. This does not depend on the MarkerView. Default: true
-     * 
+     *
      * @param enabled
      */
     public void setHighlightIndicatorEnabled(boolean enabled) {
@@ -1238,7 +3298,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * enable this to force the y-axis labels to always start at zero
-     * 
+     *
      * @param enabled
      */
     public void setStartAtZero(boolean enabled) {
@@ -1249,7 +3309,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * returns true if the chart is set to start at zero, false otherwise
-     * 
+     *
      * @return
      */
     public boolean isStartAtZeroEnabled() {
@@ -1258,7 +3318,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * sets the width of the grid lines (min 0.1f, max = 3f)
-     * 
+     *
      * @param width
      */
     public void setGridWidth(float width) {
@@ -1273,7 +3333,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * Set this to true to enable dragging (moving the chart with the finger)
      * for the chart (this does not effect scaling).
-     * 
+     *
      * @param enabled
      */
     public void setDragEnabled(boolean enabled) {
@@ -1282,7 +3342,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * Returns true if dragging is enabled for the chart, false if not.
-     * 
+     *
      * @return
      */
     public boolean isDragEnabled() {
@@ -1292,7 +3352,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * Set this to true to enable scaling (zooming in and out by gesture) for
      * the chart (this does not effect dragging).
-     * 
+     *
      * @param enabled
      */
     public void setScaleEnabled(boolean enabled) {
@@ -1302,7 +3362,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * Returns true if scaling (zooming in and out by gesture) is enabled for
      * the chart, false if not.
-     * 
+     *
      * @return
      */
     public boolean isScaleEnabled() {
@@ -1312,7 +3372,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * Set this to true to enable zooming in by double-tap on the chart.
      * Default: enabled
-     * 
+     *
      * @param enabled
      */
     public void setDoubleTapToZoomEnabled(boolean enabled) {
@@ -1321,7 +3381,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * Returns true if zooming via double-tap is enabled false if not.
-     * 
+     *
      * @return
      */
     public boolean isDoubleTapToZoomEnabled() {
@@ -1330,7 +3390,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * if set to true, the vertical grid will be drawn, default: true
-     * 
+     *
      * @param enabled
      */
     public void setDrawVerticalGrid(boolean enabled) {
@@ -1339,7 +3399,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * if set to true, the horizontal grid will be drawn, default: true
-     * 
+     *
      * @param enabled
      */
     public void setDrawHorizontalGrid(boolean enabled) {
@@ -1348,7 +3408,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * returns true if drawing the vertical grid is enabled, false if not
-     * 
+     *
      * @return
      */
     public boolean isDrawVerticalGridEnabled() {
@@ -1357,7 +3417,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * returns true if drawing the horizontal grid is enabled, false if not
-     * 
+     *
      * @return
      */
     public boolean isDrawHorizontalGridEnabled() {
@@ -1366,7 +3426,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * set this to true to draw the border surrounding the chart, default: true
-     * 
+     *
      * @param enabled
      */
     public void setDrawBorder(boolean enabled) {
@@ -1375,7 +3435,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * set this to true to draw the grid background, false if not
-     * 
+     *
      * @param enabled
      */
     public void setDrawGridBackground(boolean enabled) {
@@ -1384,7 +3444,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * set this to true to enable drawing the x-labels, false if not
-     * 
+     *
      * @param enabled
      */
     public void setDrawXLabels(boolean enabled) {
@@ -1393,7 +3453,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * set this to true to enable drawing the y-labels, false if not
-     * 
+     *
      * @param enabled
      */
     public void setDrawYLabels(boolean enabled) {
@@ -1402,7 +3462,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * Returns true if drawing y-labels is enabled, false if not.
-     * 
+     *
      * @return
      */
     public boolean isDrawYLabelsEnabled() {
@@ -1411,7 +3471,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * Returns true if drawing x-labels is enabled, false if not.
-     * 
+     *
      * @return
      */
     public boolean isDrawXLabelsEnabled() {
@@ -1421,7 +3481,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * Sets an array of positions where to draw the chart border lines (e.g. new
      * BorderStyle[] { BorderStyle.BOTTOM })
-     * 
+     *
      * @param styles
      */
     public void setBorderPositions(BorderPosition[] styles) {
@@ -1430,7 +3490,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * Returns the array of positions where the chart-border is drawn.
-     * 
+     *
      * @return
      */
     public BorderPosition[] getBorderPositions() {
@@ -1439,7 +3499,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * Sets the width of the border surrounding the chart in dp.
-     * 
+     *
      * @param width
      */
     public void setBorderWidth(int width) {
@@ -1448,7 +3508,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * Sets the color of the border surrounding the chart.
-     * 
+     *
      * @param color
      */
     public void setBorderColor(int color) {
@@ -1459,7 +3519,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
      * Returns the Highlight object (contains x-index and DataSet index) of the
      * selected value at the given touch point inside the Line-, Scatter-, or
      * CandleStick-Chart.
-     * 
+     *
      * @param x
      * @param y
      * @return
@@ -1505,7 +3565,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
         int xIndex = (int) base;
 
         int dataSetIndex = 0; // index of the DataSet inside the ChartData
-                              // object
+        // object
 
         // check if we are more than half of a x-value or not
         if (xTouchVal - base > 0.5) {
@@ -1531,7 +3591,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
      * (encapsulated in a PointD). This method transforms pixel coordinates to
      * coordinates / values in the chart. This is the opposite method to
      * getPixelsForValues(...).
-     * 
+     *
      * @param x
      * @param y
      * @return
@@ -1554,14 +3614,14 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * Transforms the given chart values into pixels. This is the opposite
      * method to getValuesByTouchPoint(...).
-     * 
+     *
      * @param x
      * @param y
      * @return
      */
     public PointD getPixelsForValues(float x, float y) {
 
-        float[] pts = new float[] {
+        float[] pts = new float[]{
                 x, y
         };
 
@@ -1573,7 +3633,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * returns the y-value at the given touch position (must not necessarily be
      * a value contained in one of the datasets)
-     * 
+     *
      * @param x
      * @param y
      * @return
@@ -1584,7 +3644,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * returns the Entry object displayed at the touched position of the chart
-     * 
+     *
      * @param x
      * @param y
      * @return
@@ -1613,7 +3673,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * if the chart is fully zoomed out, return true
-     * 
+     *
      * @return
      */
     public boolean isFullyZoomedOut() {
@@ -1624,7 +3684,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
      * returns the object representing all y-labels, this method can be used to
      * acquire the YLabels object and modify it (e.g. change the position of the
      * labels)
-     * 
+     *
      * @return
      */
     public YLabels getYLabels() {
@@ -1635,7 +3695,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
      * returns the object representing all x-labels, this method can be used to
      * acquire the XLabels object and modify it (e.g. change the position of the
      * labels)
-     * 
+     *
      * @return
      */
     public XLabels getXLabels() {
@@ -1645,7 +3705,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * Enables data filtering for the chart data, filtering will use the user
      * customized Approximator handed over to this method.
-     * 
+     *
      * @param a
      */
     public void enableFiltering(Approximator a) {
@@ -1662,7 +3722,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * returns true if data filtering is enabled, false if not
-     * 
+     *
      * @return
      */
     public boolean isFilteringEnabled() {
@@ -1672,7 +3732,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * if set to true, both x and y axis can be scaled with 2 fingers, if false,
      * x and y axis can be scaled separately. default: false
-     * 
+     *
      * @param enabled
      */
     public void setPinchZoom(boolean enabled) {
@@ -1681,7 +3741,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * returns true if pinch-zoom is enabled, false if not
-     * 
+     *
      * @return
      */
     public boolean isPinchZoomEnabled() {
@@ -1691,7 +3751,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * Set an offset in dp that allows the user to drag the chart over it's
      * bounds on the x-axis.
-     * 
+     *
      * @param offset
      */
     public void setDragOffsetX(float offset) {
@@ -1701,7 +3761,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * Set an offset in dp that allows the user to drag the chart over it's
      * bounds on the y-axis.
-     * 
+     *
      * @param offset
      */
     public void setDragOffsetY(float offset) {
@@ -1710,7 +3770,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
 
     /**
      * Returns true if both drag offsets (x and y) are zero or smaller.
-     * 
+     *
      * @return
      */
     public boolean hasNoDragOffset() {
@@ -1720,7 +3780,7 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
     /**
      * returns the filtered ChartData object depending on approximator settings,
      * current scale level and x- and y-axis ratio
-     * 
+     *
      * @return
      */
     private T getFilteredData() {
@@ -1754,38 +3814,4 @@ public abstract class DecartGraphBase<T extends BarLineScatterCandleData<? exten
         return null;
     }
 
-    @Override
-    public void setPaint(Paint p, int which) {
-        super.setPaint(p, which);
-
-        switch (which) {
-            case PAINT_GRID:
-                mGridPaint = p;
-                break;
-            case PAINT_GRID_BACKGROUND:
-                mGridBackgroundPaint = p;
-                break;
-            case PAINT_BORDER:
-                mBorderPaint = p;
-                break;
-        }
-    }
-
-    @Override
-    public Paint getPaint(int which) {
-        Paint p = super.getPaint(which);
-        if (p != null)
-            return p;
-
-        switch (which) {
-            case PAINT_GRID:
-                return mGridPaint;
-            case PAINT_GRID_BACKGROUND:
-                return mGridBackgroundPaint;
-            case PAINT_BORDER:
-                return mBorderPaint;
-        }
-
-        return null;
-    }
 }

@@ -22,9 +22,9 @@ public class DecartData<T extends DecartDataSet<? extends DecartEntry>> {
     private float mYValueSum = 0f;
 
     /**
-     * total number of y-values across all DataSet objects
+     * total number of values across all DataSet objects
      */
-    private int mYValCount = 0;
+    private int mEntriesCount = 0;
 
     /**
      * maximum x-value in the x-value array
@@ -40,11 +40,6 @@ public class DecartData<T extends DecartDataSet<? extends DecartEntry>> {
      * the total sum of all x-values
      */
     private float mXValueSum = 0f;
-
-    /**
-     * total number of x-values across all DataSet objects
-     */
-    private int mXValCount = 0;
 
     /**
      * array that holds all DataSets the ChartData object represents
@@ -195,7 +190,7 @@ public class DecartData<T extends DecartDataSet<? extends DecartEntry>> {
 
         calcMinMax(mDataSets);
         calcYValueSum(mDataSets);
-        calcYValueCount(mDataSets);
+        calcEntriesCount(mDataSets);
 
         calcXValAverageLength();
     }
@@ -282,9 +277,9 @@ public class DecartData<T extends DecartDataSet<? extends DecartEntry>> {
      *
      * @return
      */
-    protected void calcYValueCount(ArrayList<T> dataSets) {
+    protected void calcEntriesCount(ArrayList<T> dataSets) {
 
-        mYValCount = 0;
+        mEntriesCount = 0;
 
         if (dataSets == null)
             return;
@@ -295,7 +290,7 @@ public class DecartData<T extends DecartDataSet<? extends DecartEntry>> {
             count += dataSets.get(i).getEntryCount();
         }
 
-        mYValCount = count;
+        mEntriesCount = count;
     }
 
     /** ONLY GETTERS AND SETTERS BELOW THIS */
@@ -329,6 +324,25 @@ public class DecartData<T extends DecartDataSet<? extends DecartEntry>> {
         return mYMax;
     }
 
+
+    /**
+     * Returns the smallest y-value the data object contains.
+     *
+     * @return
+     */
+    public float getXMin() {
+        return mXMin;
+    }
+
+    /**
+     * Returns the greatest y-value the data object contains.
+     *
+     * @return
+     */
+    public float getXMax() {
+        return mXMax;
+    }
+
     /**
      * returns the average length (in characters) across all values in the
      * x-vals array
@@ -355,8 +369,8 @@ public class DecartData<T extends DecartDataSet<? extends DecartEntry>> {
      *
      * @return
      */
-    public int getYValCount() {
-        return mYValCount;
+    public int getEntriesCount() {
+        return mEntriesCount;
     }
 
 
@@ -478,9 +492,8 @@ public class DecartData<T extends DecartDataSet<? extends DecartEntry>> {
             mDataSets = new ArrayList<T>();
         mDataSets.add(d);
 
-        mYValCount += d.getEntryCount();
+        mEntriesCount += d.getEntryCount();
         mYValueSum += d.getYValueSum();
-        mXValCount += d.getEntryCount();
         mXValueSum += d.getXValueSum();
 
         if (mYMax < d.getYMax())
@@ -510,9 +523,8 @@ public class DecartData<T extends DecartDataSet<? extends DecartEntry>> {
         // if a DataSet was removed
         if (removed) {
 
-            mYValCount -= d.getEntryCount();
+            mEntriesCount -= d.getEntryCount();
             mYValueSum -= d.getYValueSum();
-            mXValCount -= d.getEntryCount();
             mXValueSum -= d.getXValueSum();
 
             calcMinMax(mDataSets);
@@ -556,12 +568,11 @@ public class DecartData<T extends DecartDataSet<? extends DecartEntry>> {
 
             float yval = e.getYVal();
 
-            mYValCount -= 1;
+            mEntriesCount -= 1;
             mYValueSum -= yval;
 
             float xval = e.getYVal();
 
-            mXValCount -= 1;
             mXValueSum -= xval;
 
             calcMinMax(mDataSets);
