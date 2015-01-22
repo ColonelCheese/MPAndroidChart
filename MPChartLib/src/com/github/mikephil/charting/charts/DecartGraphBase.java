@@ -33,6 +33,7 @@ import com.github.mikephil.charting.interfaces.ChartInterface;
 import com.github.mikephil.charting.interfaces.OnChartGestureListener;
 import com.github.mikephil.charting.interfaces.OnChartValueSelectedListener;
 import com.github.mikephil.charting.interfaces.OnDrawListener;
+import com.github.mikephil.charting.listener.DecartGraphTouchListener;
 import com.github.mikephil.charting.renderer.DecartTransformer;
 import com.github.mikephil.charting.utils.FXLabels;
 import com.github.mikephil.charting.utils.Highlight;
@@ -430,7 +431,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         setWillNotDraw(false);
 
         mTrans = new DecartTransformer();
-
+        mListener = new DecartGraphTouchListener(this, mTrans.getTouchMatrix());
         // initialize the utils
         Utils.init(getContext().getResources());
 
@@ -2267,13 +2268,6 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         for (int i = 0; i < getChildCount(); i++) {
             getChildAt(i).layout(left, top, right, bottom);
         }
-        //
-        // prepareContentRect();
-        // Log.i(LOG_TAG,
-        // "onLayout(), width: " + mContentRect.width() + ", height: " +
-        // mContentRect.height());
-        //
-        // calculateOffsets();
     }
 
     @Override
@@ -2510,7 +2504,6 @@ public abstract class DecartGraphBase<T extends DecartData> extends
 
         mXLabels.mLabelWidth = Utils.calcTextWidth(mXLabelPaint, a.toString());
         mXLabels.mLabelHeight = Utils.calcTextHeight(mXLabelPaint, "Q");
-
 
 
         float xMin = 0f;
