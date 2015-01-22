@@ -2510,6 +2510,98 @@ public abstract class DecartGraphBase<T extends DecartData> extends
 
         mXLabels.mLabelWidth = Utils.calcTextWidth(mXLabelPaint, a.toString());
         mXLabels.mLabelHeight = Utils.calcTextHeight(mXLabelPaint, "Q");
+
+
+
+        float xMin = 0f;
+        float xMax = 0f;
+
+        // calculate the starting and entry point of the x-labels (depending on
+        // zoom / contentrect bounds)
+        if (mContentRect.height() > 10 && !mTrans.isFullyZoomedOutX()) {
+
+            PointD p1 = getValuesByTouchPoint(mContentRect.left, mContentRect.bottom);
+            PointD p2 = getValuesByTouchPoint(mContentRect.right, mContentRect.bottom);
+
+            if (!mTrans.isInvertXAxisEnabled()) {
+                xMin = (float) p1.x;
+                xMax = (float) p2.x;
+            } else {
+
+                if (!mStartAtZero)
+                    xMin = (float) Math.min(p1.x, p2.x);
+                else
+                    xMin = 0;
+                xMax = (float) Math.max(p1.x, p2.x);
+            }
+
+        } else {
+
+            if (!mTrans.isInvertXAxisEnabled()) {
+                xMin = mXChartMin;
+                xMax = mXChartMax;
+            } else {
+
+                if (!mStartAtZero)
+                    xMin = (float) Math.min(mXChartMax, mXChartMin);
+                else
+                    xMin = 0;
+                xMax = (float) Math.max(mXChartMax, mXChartMin);
+            }
+        }
+
+        int labelCount = mXLabels.getLabelCount();
+        double range = Math.abs(xMax - xMin);
+
+        if (labelCount == 0 || range <= 0) {
+            mXLabels.mEntries = new float[]{};
+            return;
+        }
+
+        double rawInterval = range / labelCount;
+        double interval = Utils.roundToNextSignificant(rawInterval);
+        double intervalMagnitude = Math.pow(10, (int) Math.log10(interval));
+        int intervalSigDigit = (int) (interval / intervalMagnitude);
+        if (intervalSigDigit > 5) {
+            // Use one order of magnitude higher, to avoid intervals like 0.9 or
+            // 90
+            interval = Math.floor(10 * intervalMagnitude);
+        }
+
+        // if the labels should only show min and max
+        if (mXLabels.isShowOnlyMinMaxEnabled()) {
+
+            mXLabels.mEntries = new float[2];
+            mXLabels.mEntries[0] = mXChartMin;
+            mXLabels.mEntries[1] = mXChartMax;
+
+        } else {
+
+            double first = Math.ceil(xMin / interval) * interval;
+            double last = Utils.nextUp(Math.floor(xMax / interval) * interval);
+
+            double f;
+            int i;
+            int n = 0;
+            for (f = first; f <= last; f += interval) {
+                ++n;
+            }
+
+            if (mXLabels.mEntries.length < n) {
+                // Ensure stops contains at least numStops elements.
+                mXLabels.mEntries = new float[n];
+            }
+
+            for (f = first, i = 0; i < n; f += interval, ++i) {
+                mXLabels.mEntries[i] = (float) f;
+            }
+        }
+
+        if (interval < 1) {
+            mXLabels.mDecimals = (int) Math.ceil(-Math.log10(interval));
+        } else {
+            mXLabels.mDecimals = 0;
+        }
     }
 
     /**
@@ -2659,49 +2751,47 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * @param yPos
      */
     protected void drawXLabels(float yPos) {
-        throw new RuntimeException("todo");
-//
-//        // pre allocate to save performance (dont allocate in loop)
-//        float[] position = new float[]{
-//                0f, 0f
-//        };
-//
-//        for (int i = 0; i < mData.getXValCount(); i += mXLabels.mXAxisLabelModulus) {
-//
-//            position[0] = i;
-//
-//            // center the text
-//            if (mXLabels.isCenterXLabelsEnabled())
-//                position[0] += 0.5f;
-//
-//            mTrans.pointValuesToPixel(position);
-//
-//            if (position[0] >= mOffsetLeft && position[0] <= getWidth() - mOffsetRight) {
-//
-//                String label = mData.getXVals().get(i);
-//
-//                if (mXLabels.isAvoidFirstLastClippingEnabled()) {
-//
-//                    // avoid clipping of the last
-//                    if (i == mData.getXValCount() - 1) {
-//                        float width = Utils.calcTextWidth(mXLabelPaint, label);
-//
-//                        if (width > getOffsetRight() * 2 && position[0] + width > getWidth())
-//                            position[0] -= width / 2;
-//
-//                        // avoid clipping of the first
-//                    } else if (i == 0) {
-//
-//                        float width = Utils.calcTextWidth(mXLabelPaint, label);
-//                        position[0] += width / 2;
-//                    }
-//                }
-//
-//                mDrawCanvas.drawText(label, position[0],
-//                        yPos,
-//                        mXLabelPaint);
-//            }
-//        }
+
+        // pre allocate to save performance (dont allocate in loop)
+        float[] position = new float[]{
+                0f, 0f
+        };
+
+        for (int i = 0; i < mXLabels.getLabelCount(); i++) {
+            position[0] = mXLabels.mEntries[i];
+
+            // center the text
+            if (mXLabels.isCenterXLabelsEnabled())
+                position[0] += 0.5f;
+
+            mTrans.pointValuesToPixel(position);
+
+            if (position[0] >= mOffsetLeft && position[0] <= getWidth() - mOffsetRight) {
+
+                String label = mXLabels.getFormattedLabel(i);
+
+                if (mXLabels.isAvoidFirstLastClippingEnabled()) {
+
+                    // avoid clipping of the last
+                    if (i == mXLabels.getLabelCount() - 1) {
+                        float width = Utils.calcTextWidth(mXLabelPaint, label);
+
+                        if (width > getOffsetRight() * 2 && position[0] + width > getWidth())
+                            position[0] -= width / 2;
+
+                        // avoid clipping of the first
+                    } else if (i == 0) {
+
+                        float width = Utils.calcTextWidth(mXLabelPaint, label);
+                        position[0] += width / 2;
+                    }
+                }
+
+                mDrawCanvas.drawText(label, position[0],
+                        yPos,
+                        mXLabelPaint);
+            }
+        }
     }
 
     /**
@@ -2888,7 +2978,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
                 0f, 0f
         };
 
-        for (int i = 0; i < mXLabels.mEntryCount; i++) {
+        for (int i = 0; i < mXLabels.getLabelCount(); i++) {
 
             position[1] = mYLabels.mEntries[i];
             mTrans.pointValuesToPixel(position);

@@ -1,4 +1,3 @@
-
 package com.github.mikephil.charting.utils;
 
 /**
@@ -6,8 +5,10 @@ package com.github.mikephil.charting.utils;
  */
 public class FXLabels extends LabelBase {
 
-    /** the actual array of entries */
-    public float[] mEntries = new float[] {};
+    /**
+     * the actual array of entries
+     */
+    public float[] mEntries = new float[]{};
 
     /**
      * width of the x-axis labels in pixels - this is calculated by the
@@ -21,13 +22,23 @@ public class FXLabels extends LabelBase {
      */
     public int mLabelHeight = 1;
 
-    /** the number of entries the legend contains */
-    public int mEntryCount;
-
-    /** the number of decimal digits to use */
+    /**
+     * if true, x-axis label text is centered when using barcharts
+     */
+    private boolean mCenterXAxisLabels = false;
+    /**
+     * if set to true, the chart will avoid that the first and last label entry
+     * in the chart "clip" off the edge of the chart
+     */
+    private boolean mAvoidFirstLastClipping = false;
+    /**
+     * the number of decimal digits to use
+     */
     public int mDecimals;
 
-    /** the number of y-label entries the y-labels should have, default 6 */
+    /**
+     * the number of y-label entries the y-labels should have, default 6
+     */
     private int mLabelCount = 6;
 
     /**
@@ -35,13 +46,19 @@ public class FXLabels extends LabelBase {
      */
     private boolean mDrawUnitsInLabels = true;
 
-    /** if true, thousands ylabel values are separated by a dot */
+    /**
+     * if true, thousands ylabel values are separated by a dot
+     */
     protected boolean mSeparateTousands = true;
 
-    /** if true, the x-labels show only the minimum and maximum value */
+    /**
+     * if true, the x-labels show only the minimum and maximum value
+     */
     protected boolean mShowOnlyMinMax = false;
 
-    /** the formatter used to customly format the y-labels */
+    /**
+     * the formatter used to customly format the y-labels
+     */
     private ValueFormatter mFormatter = null;
 
     /**
@@ -62,18 +79,20 @@ public class FXLabels extends LabelBase {
     }
 
     /**
-     * Returns the number of label entries the y-axis should have
+     * Returns the number of label entries the x-axis should have
      *
      * @return
      */
     public int getLabelCount() {
         return mLabelCount;
     }
+
     /**
      * the space that should be left out (in characters) between the x-axis
      * labels
      */
     private int mSpaceBetweenLabels = 4;
+
     /**
      * Set this to true to enable values above 1000 to be separated by a dot.
      *
@@ -128,6 +147,27 @@ public class FXLabels extends LabelBase {
     public boolean isShowOnlyMinMaxEnabled() {
         return mShowOnlyMinMax;
     }
+
+    /**
+     * returns true if centering x-axis labels when using barcharts is enabled,
+     * false if not
+     *
+     * @return
+     */
+    public boolean isCenterXLabelsEnabled() {
+        return mCenterXAxisLabels;
+    }
+
+    /**
+     * set this to true to center the x-label text when using barcharts ,
+     * default: false
+     *
+     * @param enabled
+     */
+    public void setCenterXLabelText(boolean enabled) {
+        mCenterXAxisLabels = enabled;
+    }
+
     /**
      * Sets the space (in characters) that should be left out between the x-axis
      * labels, default 4
@@ -147,6 +187,7 @@ public class FXLabels extends LabelBase {
     public int getSpaceBetweenLabels() {
         return mSpaceBetweenLabels;
     }
+
     /**
      * Returns the longest formatted label (in terms of characters) the y-labels
      * contain.
@@ -191,7 +232,9 @@ public class FXLabels extends LabelBase {
         return text;
     }
 
-    /** the position of the x-labels relative to the chart */
+    /**
+     * the position of the x-labels relative to the chart
+     */
     private XLabels.XLabelPosition mPosition = XLabels.XLabelPosition.TOP;
 
     public XLabels.XLabelPosition getPosition() {
@@ -200,11 +243,30 @@ public class FXLabels extends LabelBase {
 
     /**
      * sets the position of the x-labels
-     * 
+     *
      * @param pos
      */
     public void setPosition(XLabels.XLabelPosition pos) {
         mPosition = pos;
+    }
+
+    /**
+     * if set to true, the chart will avoid that the first and last label entry
+     * in the chart "clip" off the edge of the chart or the screen
+     *
+     * @param enabled
+     */
+    public void setAvoidFirstLastClipping(boolean enabled) {
+        mAvoidFirstLastClipping = enabled;
+    }
+
+    /**
+     * returns true if avoid-first-lastclipping is enabled, false if not
+     *
+     * @return
+     */
+    public boolean isAvoidFirstLastClippingEnabled() {
+        return mAvoidFirstLastClipping;
     }
 
 }

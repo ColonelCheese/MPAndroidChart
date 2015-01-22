@@ -318,6 +318,16 @@ public class DecartTransformer {
         return mInvertYAxis;
     }
 
+
+    /**
+     * If this returns true, the y-axis is inverted.
+     *
+     * @return
+     */
+    public boolean isInvertXAxisEnabled() {
+        return false;
+    }
+
     /**
      * Centers the viewport around the specified position (x-index and y-value)
      * in the chart. Centering the viewport outside the bounds of the chart is
@@ -443,28 +453,6 @@ public class DecartTransformer {
         Matrix save = zoom(mMinScaleX, mMinScaleY, 0f, 0f);
         refresh(save, chart);
     }
-
-    // /**
-    // * transforms the given rect objects with the touch matrix only
-    // *
-    // * @param paths
-    // */
-    // public void transformRectsTouch(ArrayList<RectF> rects) {
-    // for (int i = 0; i < rects.size(); i++) {
-    // mMatrixTouch.mapRect(rects.get(i));
-    // }
-    // }
-    //
-    // /**
-    // * transforms the given path objects with the touch matrix only
-    // *
-    // * @param paths
-    // */
-    // public void transformPathsTouch(ArrayList<Path> paths) {
-    // for (int i = 0; i < paths.size(); i++) {
-    // paths.get(i).transform(mMatrixTouch);
-    // }
-    // }
 
     public Matrix getTouchMatrix() {
         return mMatrixTouch;
