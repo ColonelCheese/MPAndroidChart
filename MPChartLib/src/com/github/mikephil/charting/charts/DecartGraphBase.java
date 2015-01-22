@@ -25,18 +25,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 
-import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.DataSet;
 import com.github.mikephil.charting.data.DecartData;
 import com.github.mikephil.charting.data.DecartDataSet;
 import com.github.mikephil.charting.data.DecartEntry;
 import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.filter.Approximator;
 import com.github.mikephil.charting.interfaces.ChartInterface;
 import com.github.mikephil.charting.interfaces.OnChartGestureListener;
 import com.github.mikephil.charting.interfaces.OnChartValueSelectedListener;
 import com.github.mikephil.charting.interfaces.OnDrawListener;
-import com.github.mikephil.charting.renderer.Transformer;
+import com.github.mikephil.charting.renderer.DecartTransformer;
 import com.github.mikephil.charting.utils.FXLabels;
 import com.github.mikephil.charting.utils.Highlight;
 import com.github.mikephil.charting.utils.Legend;
@@ -45,10 +42,8 @@ import com.github.mikephil.charting.utils.LimitLine;
 import com.github.mikephil.charting.utils.LimitLine.LimitLabelPosition;
 import com.github.mikephil.charting.utils.MarkerView;
 import com.github.mikephil.charting.utils.PointD;
-import com.github.mikephil.charting.utils.SelInfo;
 import com.github.mikephil.charting.utils.Utils;
 import com.github.mikephil.charting.utils.ValueFormatter;
-import com.github.mikephil.charting.utils.XLabels;
 import com.github.mikephil.charting.utils.XLabels.XLabelPosition;
 import com.github.mikephil.charting.utils.YLabels;
 import com.github.mikephil.charting.utils.YLabels.YLabelPosition;
@@ -252,7 +247,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * Transformer object used to transform values to pixels and the other way
      * around
      */
-    protected Transformer mTrans;
+    protected DecartTransformer mTrans;
 
     /**
      * listener that is called when a value on the chart is selected
@@ -434,7 +429,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
 
         setWillNotDraw(false);
 
-        mTrans = new Transformer();
+        mTrans = new DecartTransformer();
 
         // initialize the utils
         Utils.init(getContext().getResources());
@@ -750,7 +745,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
 
         drawBorder();
 
-        drawMarkers();
+        //TODO:drawMarkers();
 
         drawDescription();
 
@@ -1203,33 +1198,33 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * @param highs
      */
     public void highlightTouch(Highlight high) {
-
-        if (high == null)
-            mIndicesToHightlight = null;
-        else {
-
-            // set the indices to highlight
-            mIndicesToHightlight = new Highlight[]{
-                    high
-            };
-        }
-
-        // redraw the chart
-        invalidate();
-
-        if (mSelectionListener != null) {
-
-            if (!valuesToHighlight())
-                mSelectionListener.onNothingSelected();
-            else {
-
-                Entry e = getEntryByDataSetIndex(high.getXIndex(),
-                        high.getDataSetIndex());
-
-                // notify the listener
-                mSelectionListener.onValueSelected(e, high.getDataSetIndex());
-            }
-        }
+        throw new RuntimeException("todo");
+//        if (high == null)
+//            mIndicesToHightlight = null;
+//        else {
+//
+//            // set the indices to highlight
+//            mIndicesToHightlight = new Highlight[]{
+//                    high
+//            };
+//        }
+//
+//        // redraw the chart
+//        invalidate();
+//
+//        if (mSelectionListener != null) {
+//
+//            if (!valuesToHighlight())
+//                mSelectionListener.onNothingSelected();
+//            else {
+//
+//                Entry e = getEntryByDataSetIndex(high.getXIndex(),
+//                        high.getDataSetIndex());
+//
+//                // notify the listener
+//                mSelectionListener.onValueSelected(e, high.getDataSetIndex());
+//            }
+//        }
     }
 
     /**
@@ -1251,54 +1246,55 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * draws all MarkerViews on the highlighted positions
      */
     protected void drawMarkers() {
-
-        // if there is no marker view or drawing marker is disabled
-        if (mMarkerView == null || !mDrawMarkerViews || !valuesToHighlight())
-            return;
-
-        for (int i = 0; i < mIndicesToHightlight.length; i++) {
-
-            int xIndex = mIndicesToHightlight[i].getXIndex();
-            int dataSetIndex = mIndicesToHightlight[i].getDataSetIndex();
-
-            if (xIndex <= mDeltaX && xIndex <= mDeltaX * mPhaseX) {
-
-                Entry e = getEntryByDataSetIndex(xIndex, dataSetIndex);
-
-                // make sure entry not null
-                if (e == null)
-                    continue;
-
-                float[] pos = getMarkerPosition(e, dataSetIndex);
-
-                // check bounds
-                if (pos[0] < mOffsetLeft || pos[0] > getWidth() - mOffsetRight
-                        || pos[1] < mOffsetTop || pos[1] > getHeight() - mOffsetBottom)
-                    continue;
-
-                // callbacks to update the content
-                mMarkerView.refreshContent(e, dataSetIndex);
-
-                // mMarkerView.measure(MeasureSpec.makeMeasureSpec(0,
-                // MeasureSpec.UNSPECIFIED),
-                // MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-                // mMarkerView.layout(0, 0, mMarkerView.getMeasuredWidth(),
-                // mMarkerView.getMeasuredHeight());
-                // mMarkerView.draw(mDrawCanvas, pos[0], pos[1]);
-
-                mMarkerView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-                        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-                mMarkerView.layout(0, 0, mMarkerView.getMeasuredWidth(),
-                        mMarkerView.getMeasuredHeight());
-
-                if (pos[1] - mMarkerView.getHeight() <= 0) {
-                    float y = mMarkerView.getHeight() - pos[1];
-                    mMarkerView.draw(mDrawCanvas, pos[0], pos[1] + y);
-                } else {
-                    mMarkerView.draw(mDrawCanvas, pos[0], pos[1]);
-                }
-            }
-        }
+        throw new RuntimeException("TODO");
+//
+//        // if there is no marker view or drawing marker is disabled
+//        if (mMarkerView == null || !mDrawMarkerViews || !valuesToHighlight())
+//            return;
+//
+//        for (int i = 0; i < mIndicesToHightlight.length; i++) {
+//
+//            int xIndex = mIndicesToHightlight[i].getXIndex();
+//            int dataSetIndex = mIndicesToHightlight[i].getDataSetIndex();
+//
+//            if (xIndex <= mDeltaX && xIndex <= mDeltaX * mPhaseX) {
+//
+//                Entry e = getEntryByDataSetIndex(xIndex, dataSetIndex);
+//
+//                // make sure entry not null
+//                if (e == null)
+//                    continue;
+//
+//                float[] pos = getMarkerPosition(e, dataSetIndex);
+//
+//                // check bounds
+//                if (pos[0] < mOffsetLeft || pos[0] > getWidth() - mOffsetRight
+//                        || pos[1] < mOffsetTop || pos[1] > getHeight() - mOffsetBottom)
+//                    continue;
+//
+//                // callbacks to update the content
+//                mMarkerView.refreshContent(e, dataSetIndex);
+//
+//                // mMarkerView.measure(MeasureSpec.makeMeasureSpec(0,
+//                // MeasureSpec.UNSPECIFIED),
+//                // MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+//                // mMarkerView.layout(0, 0, mMarkerView.getMeasuredWidth(),
+//                // mMarkerView.getMeasuredHeight());
+//                // mMarkerView.draw(mDrawCanvas, pos[0], pos[1]);
+//
+//                mMarkerView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+//                        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+//                mMarkerView.layout(0, 0, mMarkerView.getMeasuredWidth(),
+//                        mMarkerView.getMeasuredHeight());
+//
+//                if (pos[1] - mMarkerView.getHeight() <= 0) {
+//                    float y = mMarkerView.getHeight() - pos[1];
+//                    mMarkerView.draw(mDrawCanvas, pos[0], pos[1] + y);
+//                } else {
+//                    mMarkerView.draw(mDrawCanvas, pos[0], pos[1]);
+//                }
+//            }
+//        }
     }
 
     /**
@@ -1825,7 +1821,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      *
      * @return
      */
-    public Transformer getTransformer() {
+    public DecartTransformer getTransformer() {
         return mTrans;
     }
 
@@ -2663,48 +2659,49 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * @param yPos
      */
     protected void drawXLabels(float yPos) {
-
-        // pre allocate to save performance (dont allocate in loop)
-        float[] position = new float[]{
-                0f, 0f
-        };
-
-        for (int i = 0; i < mData.getXValCount(); i += mXLabels.mXAxisLabelModulus) {
-
-            position[0] = i;
-
-            // center the text
-            if (mXLabels.isCenterXLabelsEnabled())
-                position[0] += 0.5f;
-
-            mTrans.pointValuesToPixel(position);
-
-            if (position[0] >= mOffsetLeft && position[0] <= getWidth() - mOffsetRight) {
-
-                String label = mData.getXVals().get(i);
-
-                if (mXLabels.isAvoidFirstLastClippingEnabled()) {
-
-                    // avoid clipping of the last
-                    if (i == mData.getXValCount() - 1) {
-                        float width = Utils.calcTextWidth(mXLabelPaint, label);
-
-                        if (width > getOffsetRight() * 2 && position[0] + width > getWidth())
-                            position[0] -= width / 2;
-
-                        // avoid clipping of the first
-                    } else if (i == 0) {
-
-                        float width = Utils.calcTextWidth(mXLabelPaint, label);
-                        position[0] += width / 2;
-                    }
-                }
-
-                mDrawCanvas.drawText(label, position[0],
-                        yPos,
-                        mXLabelPaint);
-            }
-        }
+        throw new RuntimeException("todo");
+//
+//        // pre allocate to save performance (dont allocate in loop)
+//        float[] position = new float[]{
+//                0f, 0f
+//        };
+//
+//        for (int i = 0; i < mData.getXValCount(); i += mXLabels.mXAxisLabelModulus) {
+//
+//            position[0] = i;
+//
+//            // center the text
+//            if (mXLabels.isCenterXLabelsEnabled())
+//                position[0] += 0.5f;
+//
+//            mTrans.pointValuesToPixel(position);
+//
+//            if (position[0] >= mOffsetLeft && position[0] <= getWidth() - mOffsetRight) {
+//
+//                String label = mData.getXVals().get(i);
+//
+//                if (mXLabels.isAvoidFirstLastClippingEnabled()) {
+//
+//                    // avoid clipping of the last
+//                    if (i == mData.getXValCount() - 1) {
+//                        float width = Utils.calcTextWidth(mXLabelPaint, label);
+//
+//                        if (width > getOffsetRight() * 2 && position[0] + width > getWidth())
+//                            position[0] -= width / 2;
+//
+//                        // avoid clipping of the first
+//                    } else if (i == 0) {
+//
+//                        float width = Utils.calcTextWidth(mXLabelPaint, label);
+//                        position[0] += width / 2;
+//                    }
+//                }
+//
+//                mDrawCanvas.drawText(label, position[0],
+//                        yPos,
+//                        mXLabelPaint);
+//            }
+//        }
     }
 
     /**
@@ -2783,7 +2780,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
                 return;
 
             if (mYLabels.isDrawUnitsInYLabelEnabled()) {
-                mDrawCanvas.drawText(text + mUnit, xPos, positions[i * 2 + 1] + yOffset,
+                mDrawCanvas.drawText(text, xPos, positions[i * 2 + 1] + yOffset,
                         mYLabelPaint);
             } else {
                 mDrawCanvas.drawText(text, xPos, positions[i * 2 + 1] + yOffset, mYLabelPaint);
@@ -2891,17 +2888,12 @@ public abstract class DecartGraphBase<T extends DecartData> extends
                 0f, 0f
         };
 
-        for (int i = 0; i < mData.getXValCount(); i += mXLabels.mXAxisLabelModulus) {
+        for (int i = 0; i < mXLabels.mEntryCount; i++) {
 
-            position[0] = i;
-
+            position[1] = mYLabels.mEntries[i];
             mTrans.pointValuesToPixel(position);
-
-            if (position[0] >= mOffsetLeft && position[0] <= getWidth()) {
-
-                mDrawCanvas.drawLine(position[0], mOffsetTop, position[0], getHeight()
-                        - mOffsetBottom, mGridPaint);
-            }
+            mDrawCanvas.drawLine(position[1], mOffsetTop, position[1], getHeight()
+                    - mOffsetBottom, mGridPaint);
         }
     }
 
@@ -2938,7 +2930,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
             // if drawing the limit-value is enabled
             if (l.isDrawValueEnabled()) {
 
-                PointF pos = getPosition(new Entry(l.getLimit(), 0));
+                PointF pos = getPosition(new DecartEntry(l.getLimit(), 0));
 
                 // save text align
                 Align align = mValuePaint.getTextAlign();
@@ -2946,9 +2938,6 @@ public abstract class DecartGraphBase<T extends DecartData> extends
                 float xOffset = Utils.convertDpToPixel(4f);
                 float yOffset = l.getLineWidth() + xOffset;
                 String label = mValueFormatter.getFormattedValue(l.getLimit());
-
-                if (mDrawUnitInChart)
-                    label += mUnit;
 
                 if (l.getLabelPosition() == LimitLabelPosition.RIGHT) {
 
@@ -3244,25 +3233,26 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * @param e
      * @return
      */
-    public PointF getPosition(Entry e) {
-
-        if (e == null)
-            return null;
-
-        float[] vals = new float[]{
-                e.getXIndex(), e.getVal()
-        };
-
-        if (this instanceof DecartGraph) {
-
-            BarDataSet set = (BarDataSet) mData.getDataSetForEntry(e);
-            if (set != null)
-                vals[0] += set.getBarSpace() / 2f;
-        }
-
-        mTrans.pointValuesToPixel(vals);
-
-        return new PointF(vals[0], vals[1]);
+    public PointF getPosition(DecartEntry e) {
+        throw new RuntimeException("todo");
+//
+//        if (e == null)
+//            return null;
+//
+//        float[] vals = new float[]{
+//                e.getXIndex(), e.getVal()
+//        };
+//
+//        if (this instanceof DecartGraph) {
+//
+//            DecartDataSet set = (DecartDataSet) mData.getDataSetForEntry(e);
+//            if (set != null)
+//                vals[0] += set.getBarSpace() / 2f;
+//        }
+//
+//        mTrans.pointValuesToPixel(vals);
+//
+//        return new PointF(vals[0], vals[1]);
     }
 
     /**
@@ -3525,65 +3515,63 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * @return
      */
     public Highlight getHighlightByTouchPoint(float x, float y) {
-
-        if (mDataNotSet || mData == null) {
-            Log.e(LOG_TAG, "Can't select by touch. No data set.");
-            return null;
-        }
-
-        // create an array of the touch-point
-        float[] pts = new float[2];
-        pts[0] = x;
-        pts[1] = y;
-
-        mTrans.pixelsToValue(pts);
-
-        double xTouchVal = pts[0];
-        double yTouchVal = pts[1];
-        double base = Math.floor(xTouchVal);
-
-        double touchOffset = mDeltaX * 0.025;
-        // Log.i(LOG_TAG, "touchindex x: " + xTouchVal + ", touchindex y: " +
-        // yTouchVal + ", offset: "
-        // + touchOffset);
-        // Toast.makeText(getContext(), "touchindex x: " + xTouchVal +
-        // ", touchindex y: " + yTouchVal + ", offset: " + touchOffset,
-        // Toast.LENGTH_SHORT).show();
-
-        // touch out of chart
-        if (xTouchVal < -touchOffset || xTouchVal > mDeltaX + touchOffset)
-            return null;
-
-        if (this instanceof CandleStickChart)
-            base -= 0.5;
-
-        if (base < 0)
-            base = 0;
-        if (base >= mDeltaX)
-            base = mDeltaX - 1;
-
-        int xIndex = (int) base;
-
-        int dataSetIndex = 0; // index of the DataSet inside the ChartData
-        // object
-
-        // check if we are more than half of a x-value or not
-        if (xTouchVal - base > 0.5) {
-            xIndex = (int) base + 1;
-        }
-
-        ArrayList<SelInfo> valsAtIndex = getYValsAtIndex(xIndex);
-
-        dataSetIndex = Utils.getClosestDataSetIndex(valsAtIndex, (float) yTouchVal);
-
-        if (dataSetIndex == -1)
-            return null;
-
-        // Toast.makeText(getContext(), "xindex: " + xIndex + ", dataSetIndex: "
-        // + dataSetIndex,
-        // Toast.LENGTH_SHORT).show();
-
-        return new Highlight(xIndex, dataSetIndex);
+        throw new RuntimeException("todo");
+//
+//        if (mDataNotSet || mData == null) {
+//            Log.e(LOG_TAG, "Can't select by touch. No data set.");
+//            return null;
+//        }
+//
+//        // create an array of the touch-point
+//        float[] pts = new float[2];
+//        pts[0] = x;
+//        pts[1] = y;
+//
+//        mTrans.pixelsToValue(pts);
+//
+//        double xTouchVal = pts[0];
+//        double yTouchVal = pts[1];
+//        double base = Math.floor(xTouchVal);
+//
+//        double touchOffset = mDeltaX * 0.025;
+//        // Log.i(LOG_TAG, "touchindex x: " + xTouchVal + ", touchindex y: " +
+//        // yTouchVal + ", offset: "
+//        // + touchOffset);
+//        // Toast.makeText(getContext(), "touchindex x: " + xTouchVal +
+//        // ", touchindex y: " + yTouchVal + ", offset: " + touchOffset,
+//        // Toast.LENGTH_SHORT).show();
+//
+//        // touch out of chart
+//        if (xTouchVal < -touchOffset || xTouchVal > mDeltaX + touchOffset)
+//            return null;
+//
+//        if (base < 0)
+//            base = 0;
+//        if (base >= mDeltaX)
+//            base = mDeltaX - 1;
+//
+//        int xIndex = (int) base;
+//
+//        int dataSetIndex = 0; // index of the DataSet inside the ChartData
+//        // object
+//
+//        // check if we are more than half of a x-value or not
+//        if (xTouchVal - base > 0.5) {
+//            xIndex = (int) base + 1;
+//        }
+//
+//        ArrayList<SelInfo> valsAtIndex = getYValsAtIndex(xIndex);
+//
+//        dataSetIndex = Utils.getClosestDataSetIndex(valsAtIndex, (float) yTouchVal);
+//
+//        if (dataSetIndex == -1)
+//            return null;
+//
+//        // Toast.makeText(getContext(), "xindex: " + xIndex + ", dataSetIndex: "
+//        // + dataSetIndex,
+//        // Toast.LENGTH_SHORT).show();
+//
+//        return new Highlight(xIndex, dataSetIndex);
     }
 
     /**
@@ -3698,35 +3686,8 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      *
      * @return
      */
-    public XLabels getXLabels() {
+    public FXLabels getXLabels() {
         return mXLabels;
-    }
-
-    /**
-     * Enables data filtering for the chart data, filtering will use the user
-     * customized Approximator handed over to this method.
-     *
-     * @param a
-     */
-    public void enableFiltering(Approximator a) {
-        mFilterData = true;
-        // mApproximator = a;
-    }
-
-    /**
-     * Disables data filtering for the chart.
-     */
-    public void disableFiltering() {
-        mFilterData = false;
-    }
-
-    /**
-     * returns true if data filtering is enabled, false if not
-     *
-     * @return
-     */
-    public boolean isFilteringEnabled() {
-        return mFilterData;
     }
 
     /**
@@ -3775,43 +3736,6 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      */
     public boolean hasNoDragOffset() {
         return mTrans.hasNoDragOffset();
-    }
-
-    /**
-     * returns the filtered ChartData object depending on approximator settings,
-     * current scale level and x- and y-axis ratio
-     *
-     * @return
-     */
-    private T getFilteredData() {
-        //
-        // float deltaRatio = mDeltaY / mDeltaX;
-        // float scaleRatio = mScaleY / mScaleX;
-        //
-        // // set the determined ratios
-        // mApproximator.setRatios(deltaRatio, scaleRatio);
-        //
-        // // Log.i("Approximator", "DeltaRatio: " + deltaRatio +
-        // ", ScaleRatio: "
-        // // + scaleRatio);
-        //
-        // ArrayList<DataSet> dataSets = new ArrayList<DataSet>();
-        //
-        // for (int j = 0; j < mOriginalData.getDataSetCount(); j++) {
-        //
-        // DataSet old = mOriginalData.getDataSetByIndex(j);
-        //
-        // // do the filtering
-        // ArrayList<Entry> approximated = mApproximator.filter(old.getYVals());
-        //
-        // DataSet set = new DataSet(approximated, old.getLabel());
-        // dataSets.add(set);
-        // }
-        //
-        // ChartData d = new ChartData(mOriginalData.getXVals(), dataSets);
-        // return d;
-
-        return null;
     }
 
 }

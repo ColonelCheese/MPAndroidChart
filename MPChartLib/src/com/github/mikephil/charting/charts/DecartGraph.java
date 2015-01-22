@@ -1,25 +1,25 @@
-
 package com.github.mikephil.charting.charts;
 
 import android.content.Context;
 import android.graphics.Path;
 import android.util.AttributeSet;
 
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.ScatterData;
-import com.github.mikephil.charting.data.ScatterDataSet;
+import com.github.mikephil.charting.data.DecartData;
+import com.github.mikephil.charting.data.DecartDataSet;
+import com.github.mikephil.charting.data.DecartEntry;
 
 import java.util.ArrayList;
 
 /**
  * The Decart's orthogonal graph. Draws dots, triangles, squares and custom shapes into the
  * chartview.
- * 
  */
-public class DecartGraph extends DecartGraphBase<ScatterData> {
+public class DecartGraph extends DecartGraphBase<DecartData> {
 
-    /** enum that defines the shape that is drawn where the values are */
-    public enum ScatterShape {
+    /**
+     * enum that defines the shape that is drawn where the values are
+     */
+    public enum GraphShape {
         CROSS, TRIANGLE, CIRCLE, SQUARE, CUSTOM
     }
 
@@ -34,15 +34,15 @@ public class DecartGraph extends DecartGraphBase<ScatterData> {
     public DecartGraph(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
-    
+
     @Override
     protected void prepareContentRect() {
-        if(isEmpty()) {
+        if (isEmpty()) {
             super.prepareContentRect();
         } else {
-            
+
             float offset = mData.getGreatestShapeSize() / 2f;
-            
+
             mContentRect.set(mOffsetLeft - offset,
                     mOffsetTop,
                     getWidth() - mOffsetRight + offset,
@@ -54,25 +54,25 @@ public class DecartGraph extends DecartGraphBase<ScatterData> {
     protected void calcMinMax(boolean fixedValues) {
         super.calcMinMax(fixedValues);
 
-        if (mDeltaX == 0 && mData.getYValCount() > 0)
+        if (mDeltaX == 0 && mData.getEntriesCount() > 0)
             mDeltaX = 1;
     }
 
     @Override
     protected void drawData() {
 
-        ArrayList<ScatterDataSet> dataSets = mData.getDataSets();
+        ArrayList<DecartDataSet> dataSets = mData.getDataSets();
 
         for (int i = 0; i < mData.getDataSetCount(); i++) {
 
-            ScatterDataSet dataSet = dataSets.get(i);
-            ArrayList<Entry> entries = dataSet.getYVals();
+            DecartDataSet dataSet = dataSets.get(i);
+            ArrayList<DecartEntry> entries = dataSet.getEntries();
 
             float shapeHalf = dataSet.getScatterShapeSize() / 2f;
 
-            float[] valuePoints = mTrans.generateTransformedValuesLineScatter(entries, mPhaseY);
+            float[] valuePoints = mTrans.generateTransformedValuesDecart(entries, mPhaseY);
 
-            ScatterShape shape = dataSet.getScatterShape();
+            GraphShape shape = dataSet.getScatterShape();
 
             for (int j = 0; j < valuePoints.length * mPhaseX; j += 2) {
 
@@ -89,19 +89,19 @@ public class DecartGraph extends DecartGraphBase<ScatterData> {
                 // out of bounds, reuse colors.
                 mRenderPaint.setColor(dataSet.getColor(j));
 
-                if (shape == ScatterShape.SQUARE) {
+                if (shape == GraphShape.SQUARE) {
 
                     mDrawCanvas.drawRect(valuePoints[j] - shapeHalf,
                             valuePoints[j + 1] - shapeHalf, valuePoints[j]
                                     + shapeHalf, valuePoints[j + 1]
                                     + shapeHalf, mRenderPaint);
 
-                } else if (shape == ScatterShape.CIRCLE) {
+                } else if (shape == GraphShape.CIRCLE) {
 
                     mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf,
                             mRenderPaint);
 
-                } else if (shape == ScatterShape.CROSS) {
+                } else if (shape == GraphShape.CROSS) {
 
                     mDrawCanvas.drawLine(valuePoints[j] - shapeHalf, valuePoints[j + 1],
                             valuePoints[j] + shapeHalf,
@@ -110,7 +110,7 @@ public class DecartGraph extends DecartGraphBase<ScatterData> {
                             valuePoints[j], valuePoints[j + 1]
                                     + shapeHalf, mRenderPaint);
 
-                } else if (shape == ScatterShape.TRIANGLE) {
+                } else if (shape == GraphShape.TRIANGLE) {
 
                     // create a triangle path
                     Path tri = new Path();
@@ -121,7 +121,7 @@ public class DecartGraph extends DecartGraphBase<ScatterData> {
 
                     mDrawCanvas.drawPath(tri, mRenderPaint);
 
-                } else if (shape == ScatterShape.CUSTOM) {
+                } else if (shape == GraphShape.CUSTOM) {
 
                     Path customShape = dataSet.getCustomScatterShape();
 
@@ -139,17 +139,17 @@ public class DecartGraph extends DecartGraphBase<ScatterData> {
     @Override
     protected void drawValues() {
         // if values are drawn
-        if (mDrawYValues && mData.getYValCount() < mMaxVisibleCount * mTrans.getScaleX()) {
+        if (mDrawYValues && mData.getEntriesCount() < mMaxVisibleCount * mTrans.getScaleX()) {
 
-            ArrayList<ScatterDataSet> dataSets = mData
+            ArrayList<DecartDataSet> dataSets = mData
                     .getDataSets();
 
             for (int i = 0; i < mData.getDataSetCount(); i++) {
 
-                ScatterDataSet dataSet = dataSets.get(i);
-                ArrayList<Entry> entries = dataSet.getYVals();
+                DecartDataSet dataSet = dataSets.get(i);
+                ArrayList<DecartEntry> entries = dataSet.getEntries();
 
-                float[] positions = mTrans.generateTransformedValuesLineScatter(entries, mPhaseY);
+                float[] positions = mTrans.generateTransformedValuesDecart(entries, mPhaseY);
 
                 float shapeSize = dataSet.getScatterShapeSize();
 
@@ -162,11 +162,11 @@ public class DecartGraph extends DecartGraphBase<ScatterData> {
                             || isOffContentBottom(positions[j + 1]))
                         continue;
 
-                    float val = entries.get(j / 2).getVal();
+                    float val = entries.get(j / 2).getYVal();
 
                     if (mDrawUnitInChart) {
 
-                        mDrawCanvas.drawText(mValueFormatter.getFormattedValue(val) + mUnit,
+                        mDrawCanvas.drawText(mValueFormatter.getFormattedValue(val),
                                 positions[j],
                                 positions[j + 1] - shapeSize, mValuePaint);
                     } else {
@@ -182,34 +182,35 @@ public class DecartGraph extends DecartGraphBase<ScatterData> {
 
     @Override
     protected void drawHighlights() {
-
-        for (int i = 0; i < mIndicesToHightlight.length; i++) {
-
-            ScatterDataSet set = mData.getDataSetByIndex(mIndicesToHightlight[i]
-                    .getDataSetIndex());
-            
-            if (set == null)
-                continue;
-
-            mHighlightPaint.setColor(set.getHighLightColor());
-
-            int xIndex = mIndicesToHightlight[i].getXIndex(); // get the
-                                                              // x-position
-
-            if (xIndex > mDeltaX * mPhaseX)
-                continue;
-
-            float y = set.getYValForXIndex(xIndex) * mPhaseY; // get the
-                                                              // y-position
-
-            float[] pts = new float[] {
-                    xIndex, mYChartMax, xIndex, mYChartMin, 0, y, mDeltaX, y
-            };
-
-            mTrans.pointValuesToPixel(pts);
-            // draw the highlight lines
-            mDrawCanvas.drawLines(pts, mHighlightPaint);
-        }
+        throw new RuntimeException("todo");
+//
+//        for (int i = 0; i < mIndicesToHightlight.length; i++) {
+//
+//            ScatterDataSet set = mData.getDataSetByIndex(mIndicesToHightlight[i]
+//                    .getDataSetIndex());
+//
+//            if (set == null)
+//                continue;
+//
+//            mHighlightPaint.setColor(set.getHighLightColor());
+//
+//            int xIndex = mIndicesToHightlight[i].getXIndex(); // get the
+//            // x-position
+//
+//            if (xIndex > mDeltaX * mPhaseX)
+//                continue;
+//
+//            float y = set.getYValForXIndex(xIndex) * mPhaseY; // get the
+//            // y-position
+//
+//            float[] pts = new float[]{
+//                    xIndex, mYChartMax, xIndex, mYChartMin, 0, y, mDeltaX, y
+//            };
+//
+//            mTrans.pointValuesToPixel(pts);
+//            // draw the highlight lines
+//            mDrawCanvas.drawLines(pts, mHighlightPaint);
+//        }
     }
 
     @Override
@@ -219,12 +220,12 @@ public class DecartGraph extends DecartGraphBase<ScatterData> {
 
     /**
      * Returns all possible predefined scattershapes.
-     * 
+     *
      * @return
      */
-    public static ScatterShape[] getAllPossibleShapes() {
-        return new ScatterShape[] {
-                ScatterShape.SQUARE, ScatterShape.CIRCLE, ScatterShape.TRIANGLE, ScatterShape.CROSS
+    public static GraphShape[] getAllPossibleShapes() {
+        return new GraphShape[]{
+                GraphShape.SQUARE, GraphShape.CIRCLE, GraphShape.TRIANGLE, GraphShape.CROSS
         };
     }
 }

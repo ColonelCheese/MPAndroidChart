@@ -4,7 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Path;
 
-import com.github.mikephil.charting.charts.ScatterChart.ScatterShape;
+import com.github.mikephil.charting.charts.DecartGraph;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.utils.Utils;
 
@@ -70,7 +70,7 @@ public class DecartDataSet<T extends DecartEntry> {
      * the type of shape that is set to be drawn where the values are at,
      * default ScatterShape.SQUARE
      */
-    private ScatterShape mScatterShape = ScatterShape.SQUARE;
+    private DecartGraph.GraphShape mGraphShape = DecartGraph.GraphShape.SQUARE;
 
     /**
      * Custom path object the user can provide that is drawn where the values
@@ -462,7 +462,7 @@ public class DecartDataSet<T extends DecartEntry> {
         DecartDataSet copied = new DecartDataSet(mEntries, getLabel());
         copied.mColors = mColors;
         copied.mShapeSize = mShapeSize;
-        copied.mScatterShape = mScatterShape;
+        copied.mGraphShape = mGraphShape;
         copied.mCustomScatterPath = mCustomScatterPath;
         copied.mHighLightColor = mHighLightColor;
 
@@ -495,8 +495,8 @@ public class DecartDataSet<T extends DecartEntry> {
      *
      * @param shape
      */
-    public void setScatterShape(ScatterShape shape) {
-        mScatterShape = shape;
+    public void setScatterShape(DecartGraph.GraphShape shape) {
+        mGraphShape = shape;
     }
 
     /**
@@ -504,8 +504,8 @@ public class DecartDataSet<T extends DecartEntry> {
      *
      * @return
      */
-    public ScatterShape getScatterShape() {
-        return mScatterShape;
+    public DecartGraph.GraphShape getScatterShape() {
+        return mGraphShape;
     }
 
     /**
