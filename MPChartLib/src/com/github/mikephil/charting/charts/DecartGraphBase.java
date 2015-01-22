@@ -2973,9 +2973,9 @@ public abstract class DecartGraphBase<T extends DecartData> extends
 
         for (int i = 0; i < mXLabels.getLabelCount(); i++) {
 
-            position[1] = mYLabels.mEntries[i];
+            position[0] = mXLabels.mEntries[i];
             mTrans.pointValuesToPixel(position);
-            mDrawCanvas.drawLine(position[1], mOffsetTop, position[1], getHeight()
+            mDrawCanvas.drawLine(position[0], mOffsetTop, position[0], getHeight()
                     - mOffsetBottom, mGridPaint);
         }
     }
