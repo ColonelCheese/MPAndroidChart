@@ -13,7 +13,7 @@ import android.view.View.OnTouchListener;
 import com.github.mikephil.charting.charts.DecartGraphBase;
 import com.github.mikephil.charting.data.DecartData;
 import com.github.mikephil.charting.interfaces.OnChartGestureListener;
-import com.github.mikephil.charting.utils.Highlight;
+import com.github.mikephil.charting.utils.DecartHighlight;
 
 /**
  * TouchListener for DecartGraph with handles all
@@ -65,7 +65,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
     /**
      * the last highlighted object
      */
-    private Highlight mLastHighlighted;
+    private DecartHighlight mLastHighlighted;
 
     /**
      * the chart the listener represents
@@ -441,7 +441,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
             l.onChartSingleTapped(e);
         }
 
-        Highlight h = mChart.getHighlightByTouchPoint(e.getX(), e.getY());
+        DecartHighlight h = mChart.getHighlightByTouchPoint(e.getX(), e.getY());
 
         if (h == null || h.equalTo(mLastHighlighted)) {
             mChart.highlightTouch(null);

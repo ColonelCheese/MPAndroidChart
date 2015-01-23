@@ -9,6 +9,7 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class DecartDataSet<T extends DecartEntry> {
 
@@ -547,6 +548,21 @@ public class DecartDataSet<T extends DecartEntry> {
      */
     public int getHighLightColor() {
         return mHighLightColor;
+    }
+
+
+    public List<DecartEntry> getEntriesInRange(float x, float y, float round) {
+
+        List<DecartEntry> entries = new ArrayList<DecartEntry>();
+
+        for (DecartEntry entry : mEntries) {
+            if (entry.getXVal() >= x - round && entry.getXVal() <= x + round
+                    && entry.getYVal() >= y - round && entry.getYVal() <= y + round) {
+                entries.add(entry);
+            }
+        }
+
+        return entries;
     }
 
 }

@@ -182,35 +182,31 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
     @Override
     protected void drawHighlights() {
-        throw new RuntimeException("todo");
-//
-//        for (int i = 0; i < mIndicesToHightlight.length; i++) {
-//
-//            ScatterDataSet set = mData.getDataSetByIndex(mIndicesToHightlight[i]
-//                    .getDataSetIndex());
-//
-//            if (set == null)
-//                continue;
-//
-//            mHighlightPaint.setColor(set.getHighLightColor());
-//
-//            int xIndex = mIndicesToHightlight[i].getXIndex(); // get the
-//            // x-position
-//
-//            if (xIndex > mDeltaX * mPhaseX)
-//                continue;
-//
-//            float y = set.getYValForXIndex(xIndex) * mPhaseY; // get the
-//            // y-position
-//
-//            float[] pts = new float[]{
-//                    xIndex, mYChartMax, xIndex, mYChartMin, 0, y, mDeltaX, y
-//            };
-//
-//            mTrans.pointValuesToPixel(pts);
-//            // draw the highlight lines
-//            mDrawCanvas.drawLines(pts, mHighlightPaint);
-//        }
+
+        for (int i = 0; i < mIndicesToHightlight.length; i++) {
+
+            DecartDataSet set = mData.getDataSetByIndex(mIndicesToHightlight[i]
+                    .getDataSetIndex());
+
+            if (set == null)
+                continue;
+
+            mHighlightPaint.setColor(set.getHighLightColor());
+
+            float xVal = mIndicesToHightlight[i].getDecartEntry().getXVal(); // get the
+            // x-position
+
+            float yVal = mIndicesToHightlight[i].getDecartEntry().getYVal();
+            // y-position
+
+            float[] pts = new float[]{
+                    xVal, mYChartMax, xVal, mYChartMin, 0, yVal, mDeltaX, yVal
+            };
+
+            mTrans.pointValuesToPixel(pts);
+            // draw the highlight lines
+            mDrawCanvas.drawLines(pts, mHighlightPaint);
+        }
     }
 
     @Override

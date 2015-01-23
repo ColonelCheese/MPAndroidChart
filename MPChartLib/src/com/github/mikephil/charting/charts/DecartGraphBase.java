@@ -20,6 +20,7 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.Pair;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,20 +29,19 @@ import android.view.ViewParent;
 import com.github.mikephil.charting.data.DecartData;
 import com.github.mikephil.charting.data.DecartDataSet;
 import com.github.mikephil.charting.data.DecartEntry;
-import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.interfaces.ChartInterface;
 import com.github.mikephil.charting.interfaces.OnChartGestureListener;
-import com.github.mikephil.charting.interfaces.OnChartValueSelectedListener;
+import com.github.mikephil.charting.interfaces.OnDecartGraphValueSelectedListener;
 import com.github.mikephil.charting.interfaces.OnDrawListener;
 import com.github.mikephil.charting.listener.DecartGraphTouchListener;
 import com.github.mikephil.charting.renderer.DecartTransformer;
+import com.github.mikephil.charting.utils.DecartHighlight;
+import com.github.mikephil.charting.utils.DecartMarkerView;
 import com.github.mikephil.charting.utils.FXLabels;
-import com.github.mikephil.charting.utils.Highlight;
 import com.github.mikephil.charting.utils.Legend;
 import com.github.mikephil.charting.utils.Legend.LegendPosition;
 import com.github.mikephil.charting.utils.LimitLine;
 import com.github.mikephil.charting.utils.LimitLine.LimitLabelPosition;
-import com.github.mikephil.charting.utils.MarkerView;
 import com.github.mikephil.charting.utils.PointD;
 import com.github.mikephil.charting.utils.Utils;
 import com.github.mikephil.charting.utils.ValueFormatter;
@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Base-class of DecartGraph.
@@ -253,7 +254,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
     /**
      * listener that is called when a value on the chart is selected
      */
-    protected OnChartValueSelectedListener mSelectionListener;
+    protected OnDecartGraphValueSelectedListener mSelectionListener;
 
     /**
      * text that is displayed when the chart is empty
@@ -746,7 +747,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
 
         drawBorder();
 
-        //TODO:drawMarkers();
+        drawMarkers();
 
         drawDescription();
 
@@ -1139,7 +1140,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * array of Highlight objects that reference the highlighted slices in the
      * chart
      */
-    protected Highlight[] mIndicesToHightlight = new Highlight[0];
+    protected DecartHighlight[] mIndicesToHightlight = new DecartHighlight[0];
 
     /**
      * Returns true if there are values to highlight, false if there are no
@@ -1162,7 +1163,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      *
      * @param highs
      */
-    public void highlightValues(Highlight[] highs) {
+    public void highlightValues(DecartHighlight[] highs) {
 
         // set the indices to highlight
         mIndicesToHightlight = highs;
@@ -1198,34 +1199,30 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      *
      * @param highs
      */
-    public void highlightTouch(Highlight high) {
-        throw new RuntimeException("todo");
-//        if (high == null)
-//            mIndicesToHightlight = null;
-//        else {
-//
-//            // set the indices to highlight
-//            mIndicesToHightlight = new Highlight[]{
-//                    high
-//            };
-//        }
-//
-//        // redraw the chart
-//        invalidate();
-//
-//        if (mSelectionListener != null) {
-//
-//            if (!valuesToHighlight())
-//                mSelectionListener.onNothingSelected();
-//            else {
-//
-//                Entry e = getEntryByDataSetIndex(high.getXIndex(),
-//                        high.getDataSetIndex());
-//
-//                // notify the listener
-//                mSelectionListener.onValueSelected(e, high.getDataSetIndex());
-//            }
-//        }
+    public void highlightTouch(DecartHighlight highlight) {
+        if (highlight == null)
+            mIndicesToHightlight = null;
+        else {
+
+            // set the indices to highlight
+            mIndicesToHightlight = new DecartHighlight[]{
+                    highlight
+            };
+        }
+
+        // redraw the chart
+        invalidate();
+
+        if (mSelectionListener != null) {
+
+            if (!valuesToHighlight())
+                mSelectionListener.onNothingSelected();
+            else {
+
+                // notify the listener
+                mSelectionListener.onValueSelected(highlight.getDecartEntry());
+            }
+        }
     }
 
     /**
@@ -1241,61 +1238,45 @@ public abstract class DecartGraphBase<T extends DecartData> extends
     /**
      * the view that represents the marker
      */
-    protected MarkerView mMarkerView;
+    protected DecartMarkerView mMarkerView;
 
     /**
      * draws all MarkerViews on the highlighted positions
      */
     protected void drawMarkers() {
-        throw new RuntimeException("TODO");
-//
-//        // if there is no marker view or drawing marker is disabled
-//        if (mMarkerView == null || !mDrawMarkerViews || !valuesToHighlight())
-//            return;
-//
-//        for (int i = 0; i < mIndicesToHightlight.length; i++) {
-//
-//            int xIndex = mIndicesToHightlight[i].getXIndex();
-//            int dataSetIndex = mIndicesToHightlight[i].getDataSetIndex();
-//
-//            if (xIndex <= mDeltaX && xIndex <= mDeltaX * mPhaseX) {
-//
-//                Entry e = getEntryByDataSetIndex(xIndex, dataSetIndex);
-//
-//                // make sure entry not null
-//                if (e == null)
-//                    continue;
-//
-//                float[] pos = getMarkerPosition(e, dataSetIndex);
-//
-//                // check bounds
-//                if (pos[0] < mOffsetLeft || pos[0] > getWidth() - mOffsetRight
-//                        || pos[1] < mOffsetTop || pos[1] > getHeight() - mOffsetBottom)
-//                    continue;
-//
-//                // callbacks to update the content
-//                mMarkerView.refreshContent(e, dataSetIndex);
-//
-//                // mMarkerView.measure(MeasureSpec.makeMeasureSpec(0,
-//                // MeasureSpec.UNSPECIFIED),
-//                // MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-//                // mMarkerView.layout(0, 0, mMarkerView.getMeasuredWidth(),
-//                // mMarkerView.getMeasuredHeight());
-//                // mMarkerView.draw(mDrawCanvas, pos[0], pos[1]);
-//
-//                mMarkerView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
-//                        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-//                mMarkerView.layout(0, 0, mMarkerView.getMeasuredWidth(),
-//                        mMarkerView.getMeasuredHeight());
-//
-//                if (pos[1] - mMarkerView.getHeight() <= 0) {
-//                    float y = mMarkerView.getHeight() - pos[1];
-//                    mMarkerView.draw(mDrawCanvas, pos[0], pos[1] + y);
-//                } else {
-//                    mMarkerView.draw(mDrawCanvas, pos[0], pos[1]);
-//                }
-//            }
-//        }
+        if (mMarkerView == null || !mDrawMarkerViews || !valuesToHighlight())
+            return;
+
+        for (int i = 0; i < mIndicesToHightlight.length; i++) {
+
+            DecartEntry decartEntry = mIndicesToHightlight[i].getDecartEntry();
+
+            // make sure entry not null
+            if (decartEntry == null)
+                continue;
+
+            float[] pos = getMarkerPosition(decartEntry);
+
+            // check bounds
+            if (pos[0] < mOffsetLeft || pos[0] > getWidth() - mOffsetRight
+                    || pos[1] < mOffsetTop || pos[1] > getHeight() - mOffsetBottom)
+                continue;
+
+            // callbacks to update the content
+            mMarkerView.refreshContent(decartEntry);
+
+            mMarkerView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+            mMarkerView.layout(0, 0, mMarkerView.getMeasuredWidth(),
+                    mMarkerView.getMeasuredHeight());
+
+            if (pos[1] - mMarkerView.getHeight() <= 0) {
+                float y = mMarkerView.getHeight() - pos[1];
+                mMarkerView.draw(mDrawCanvas, pos[0], pos[1] + y);
+            } else {
+                mMarkerView.draw(mDrawCanvas, pos[0], pos[1]);
+            }
+        }
     }
 
     /**
@@ -1306,13 +1287,10 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * @param dataSetIndex
      * @return
      */
-    private float[] getMarkerPosition(Entry e, int dataSetIndex) {
+    private float[] getMarkerPosition(DecartEntry entry) {
 
-        float xPos = e.getXIndex();
-
-        // position of the marker depends on selected value index and value
         float[] pts = new float[]{
-                xPos, e.getVal() * mPhaseY
+                entry.getXVal(), entry.getYVal() * mPhaseY
         };
 
         mTrans.pointValuesToPixel(pts);
@@ -1470,7 +1448,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      *
      * @param l
      */
-    public void setOnChartValueSelectedListener(OnChartValueSelectedListener l) {
+    public void setOnChartValueSelectedListener(OnDecartGraphValueSelectedListener l) {
         this.mSelectionListener = l;
     }
 
@@ -1752,7 +1730,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      *
      * @param v
      */
-    public void setMarkerView(MarkerView v) {
+    public void setMarkerView(DecartMarkerView v) {
         mMarkerView = v;
     }
 
@@ -1761,7 +1739,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      *
      * @return
      */
-    public MarkerView getMarkerView() {
+    public DecartMarkerView getMarkerView() {
         return mMarkerView;
     }
 
@@ -3590,72 +3568,70 @@ public abstract class DecartGraphBase<T extends DecartData> extends
 
     /**
      * Returns the Highlight object (contains x-index and DataSet index) of the
-     * selected value at the given touch point inside the Line-, Scatter-, or
-     * CandleStick-Chart.
+     * selected value at the given touch point inside the Graph.
      *
      * @param x
      * @param y
      * @return
      */
-    public Highlight getHighlightByTouchPoint(float x, float y) {
-        throw new RuntimeException("todo");
-//
-//        if (mDataNotSet || mData == null) {
-//            Log.e(LOG_TAG, "Can't select by touch. No data set.");
-//            return null;
-//        }
-//
-//        // create an array of the touch-point
-//        float[] pts = new float[2];
-//        pts[0] = x;
-//        pts[1] = y;
-//
-//        mTrans.pixelsToValue(pts);
-//
-//        double xTouchVal = pts[0];
-//        double yTouchVal = pts[1];
-//        double base = Math.floor(xTouchVal);
-//
-//        double touchOffset = mDeltaX * 0.025;
-//        // Log.i(LOG_TAG, "touchindex x: " + xTouchVal + ", touchindex y: " +
-//        // yTouchVal + ", offset: "
-//        // + touchOffset);
-//        // Toast.makeText(getContext(), "touchindex x: " + xTouchVal +
-//        // ", touchindex y: " + yTouchVal + ", offset: " + touchOffset,
-//        // Toast.LENGTH_SHORT).show();
-//
-//        // touch out of chart
-//        if (xTouchVal < -touchOffset || xTouchVal > mDeltaX + touchOffset)
-//            return null;
-//
-//        if (base < 0)
-//            base = 0;
-//        if (base >= mDeltaX)
-//            base = mDeltaX - 1;
-//
-//        int xIndex = (int) base;
-//
-//        int dataSetIndex = 0; // index of the DataSet inside the ChartData
-//        // object
-//
-//        // check if we are more than half of a x-value or not
-//        if (xTouchVal - base > 0.5) {
-//            xIndex = (int) base + 1;
-//        }
-//
-//        ArrayList<SelInfo> valsAtIndex = getYValsAtIndex(xIndex);
-//
-//        dataSetIndex = Utils.getClosestDataSetIndex(valsAtIndex, (float) yTouchVal);
-//
-//        if (dataSetIndex == -1)
-//            return null;
-//
-//        // Toast.makeText(getContext(), "xindex: " + xIndex + ", dataSetIndex: "
-//        // + dataSetIndex,
-//        // Toast.LENGTH_SHORT).show();
-//
-//        return new Highlight(xIndex, dataSetIndex);
+    public DecartHighlight getHighlightByTouchPoint(float x, float y) {
+
+        if (mDataNotSet || mData == null) {
+            Log.e(LOG_TAG, "Can't select by touch. No data set.");
+            return null;
+        }
+
+        // create an array of the touch-point
+        float[] pts = new float[2];
+        pts[0] = x;
+        pts[1] = y;
+
+        mTrans.pixelsToValue(pts);
+
+        double xTouchVal = pts[0];
+        double yTouchVal = pts[1];
+        double base = Math.floor(xTouchVal);
+
+        double touchOffset = mDeltaX * 0.025;
+
+        // touch out of chart
+        if (xTouchVal < -touchOffset || xTouchVal > mDeltaX + touchOffset)
+            return null;
+
+        ArrayList<Pair<Integer, DecartEntry>> valsAtIndex = getYValsNearXValue((float) xTouchVal, (float) yTouchVal, (float) touchOffset);
+
+        Pair<Integer, DecartEntry> selectedEntry = Utils.getClosestDataSetIndex(valsAtIndex, (float) xTouchVal, (float) yTouchVal);
+
+        if (selectedEntry == null)
+            return null;
+
+        return new DecartHighlight(selectedEntry.second, selectedEntry.first);
     }
+
+    /**
+     * Returns an array of DecarEntry objects for the given x-value.
+     *
+     * @param xValue
+     * @param round
+     * @return
+     */
+    public ArrayList<Pair<Integer, DecartEntry>> getYValsNearXValue(float xValue, float yValue, float round) {
+
+        ArrayList<Pair<Integer, DecartEntry>> vals = new ArrayList<Pair<Integer, DecartEntry>>();
+
+        for (int i = 0; i < mData.getDataSetCount(); i++) {
+
+            // extract all y-values from all DataSets at the given x-index
+            List<DecartEntry> decartEntries = mData.getDataSetByIndex(i).getEntriesInRange(xValue, yValue, round);
+
+            for (DecartEntry decartEntry : decartEntries) {
+                vals.add(new Pair(i, decartEntry));
+            }
+        }
+
+        return vals;
+    }
+
 
     /**
      * Returns the x and y values in the chart at the given touch point
@@ -3720,10 +3696,10 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * @param y
      * @return
      */
-    public Entry getEntryByTouchPoint(float x, float y) {
-        Highlight h = getHighlightByTouchPoint(x, y);
+    public DecartEntry getEntryByTouchPoint(float x, float y) {
+        DecartHighlight h = getHighlightByTouchPoint(x, y);
         if (h != null) {
-            return mData.getEntryForHighlight(h);
+            return h.getDecartEntry();
         }
         return null;
     }

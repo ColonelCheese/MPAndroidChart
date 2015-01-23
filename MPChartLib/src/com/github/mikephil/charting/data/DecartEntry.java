@@ -139,6 +139,26 @@ public class DecartEntry {
         return true;
     }
 
+    public float distanceSq(DecartEntry otherDecartEntry) {
+        float x1 = getXVal();
+        float y1 = getYVal();
+        float x2 = otherDecartEntry.getXVal();
+        float y2 = otherDecartEntry.getYVal();
+        return distanceSq(x1, y1, x2, y2);
+    }
+
+    public float distanceSq(float x2, float y2) {
+        float x1 = getXVal();
+        float y1 = getYVal();
+        return distanceSq(x1, y1, x2, y2);
+    }
+
+    private float distanceSq(float x1, float y1, float x2, float y2) {
+        x1 -= x2;
+        y1 -= y2;
+        return (x1 * x1 + y1 * y1);
+    }
+
     /**
      * returns a string representation of the entry containing x-index and value
      */
