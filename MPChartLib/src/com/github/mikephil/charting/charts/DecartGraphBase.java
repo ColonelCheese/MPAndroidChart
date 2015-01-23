@@ -428,14 +428,12 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * initialize all paints and stuff
      */
     protected void init() {
-
+        Utils.init(getContext().getResources());
         setWillNotDraw(false);
 
         mTrans = new DecartTransformer();
         mListener = new DecartGraphTouchListener(this, mTrans.getTouchMatrix());
         // initialize the utils
-        Utils.init(getContext().getResources());
-
         // do screen density conversions
         mOffsetBottom = (int) Utils.convertDpToPixel(mOffsetBottom);
         mOffsetLeft = (int) Utils.convertDpToPixel(mOffsetLeft);
@@ -2728,7 +2726,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
                 0f, 0f
         };
 
-        for (int i = 0; i < mXLabels.getLabelCount(); i++) {
+        for (int i = 0; i < mXLabels.mEntries.length; i++) {
             position[0] = mXLabels.mEntries[i];
 
             // center the text
@@ -2949,7 +2947,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
                 0f, 0f
         };
 
-        for (int i = 0; i < mXLabels.getLabelCount(); i++) {
+        for (int i = 0; i < mXLabels.mEntries.length; i++) {
 
             position[0] = mXLabels.mEntries[i];
             mTrans.pointValuesToPixel(position);

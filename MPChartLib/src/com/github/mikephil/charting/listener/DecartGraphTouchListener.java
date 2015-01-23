@@ -416,18 +416,10 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
             l.onChartLongPressed(e);
         } else if (mTouchMode == NONE) {
 
-            mChart.fitScreen();
+            //mChart.fitScreen();
 
             Log.i("BarlineChartTouch",
                     "Longpress, resetting zoom and drag, adjusting chart bounds to screen.");
-
-            // PointF trans = getTrans(e.getX(), e.getY());
-            //
-            // mChart.zoomOut(trans.x, trans.y);
-            //
-            // Log.i("BarlineChartTouch", "Longpress, Zooming Out, x: " +
-            // trans.x +
-            // ", y: " + trans.y);
         }
     }
 
