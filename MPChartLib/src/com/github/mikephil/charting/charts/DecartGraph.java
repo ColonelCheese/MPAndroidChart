@@ -2,6 +2,7 @@ package com.github.mikephil.charting.charts;
 
 import android.content.Context;
 import android.graphics.Path;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 
 import com.github.mikephil.charting.data.DecartData;
@@ -212,7 +213,15 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                                 positions[j],
                                 positions[j + 1] - shapeSize, mValuePaint);
                     } else {
-
+                        float textWidth = mValuePaint.measureText(shapeLabel);
+                        mGridBackgroundPaint.setAlpha(200);
+                        //FIXME: replace magic numbers by dimens and add separate Paint for text bg
+                        RectF rect = new RectF(positions[j] - textWidth / 2 - 4,
+                                (positions[j + 1] - shapeSize - mValuePaint.getTextSize()),
+                                (positions[j] + textWidth / 2 + 4),
+                                (positions[j + 1] - shapeSize) + 5);
+                        mDrawCanvas.drawRoundRect(rect, 8f, 8f,
+                                mGridBackgroundPaint);
                         mDrawCanvas.drawText(shapeLabel, positions[j],
                                 positions[j + 1] - shapeSize,
                                 mValuePaint);
