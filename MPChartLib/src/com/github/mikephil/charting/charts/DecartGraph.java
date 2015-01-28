@@ -17,7 +17,6 @@ import java.util.ArrayList;
 public class DecartGraph extends DecartGraphBase<DecartData> {
 
 
-    
     private float backgroundInkingMultiplier = 1.2f;
 
     /**
@@ -174,6 +173,11 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         mRenderPaint.setColor(dataSet.getColor());
     }
 
+    public String getShapeLabel(DecartDataSet dataSet, int j) {
+        float val = ((DecartEntry) dataSet.getEntries().get(j)).getYVal();
+        return mValueFormatter.getFormattedValue(val);
+    }
+
     @Override
     protected void drawValues() {
         // if values are drawn
@@ -200,16 +204,16 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                             || isOffContentBottom(positions[j + 1]))
                         continue;
 
-                    float val = entries.get(j / 2).getYVal();
+                    String shapeLabel = getShapeLabel(dataSet, j / 2);
 
                     if (mDrawUnitInChart) {
 
-                        mDrawCanvas.drawText(mValueFormatter.getFormattedValue(val),
+                        mDrawCanvas.drawText(shapeLabel,
                                 positions[j],
                                 positions[j + 1] - shapeSize, mValuePaint);
                     } else {
 
-                        mDrawCanvas.drawText(mValueFormatter.getFormattedValue(val), positions[j],
+                        mDrawCanvas.drawText(shapeLabel, positions[j],
                                 positions[j + 1] - shapeSize,
                                 mValuePaint);
                     }
