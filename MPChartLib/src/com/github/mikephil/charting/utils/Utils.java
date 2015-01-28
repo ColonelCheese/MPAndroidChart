@@ -393,8 +393,10 @@ public abstract class Utils {
         float smallesDist = Float.MAX_VALUE;
 
         for (Pair<Integer, DecartEntry> element : valsAtIndex) {
-            if (smallesDist > element.second.distanceSq(x, y)) {
+            float dist = element.second.distanceSq(x, y);
+            if (smallesDist > dist) {
                 nearest = element;
+                smallesDist = dist;
             }
         }
         return nearest;
