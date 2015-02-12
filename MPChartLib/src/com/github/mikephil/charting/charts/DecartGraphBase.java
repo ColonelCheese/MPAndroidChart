@@ -1939,8 +1939,6 @@ public abstract class DecartGraphBase<T extends DecartData> extends
             case PAINT_LIMIT_LINE:
                 mLimitLinePaint = p;
                 break;
-        }
-        switch (which) {
             case PAINT_GRID:
                 mGridPaint = p;
                 break;
@@ -1979,12 +1977,6 @@ public abstract class DecartGraphBase<T extends DecartData> extends
                 return mHighlightPaint;
             case PAINT_LIMIT_LINE:
                 return mLimitLinePaint;
-        }
-        Paint p = getPaint(which);
-        if (p != null)
-            return p;
-
-        switch (which) {
             case PAINT_GRID:
                 return mGridPaint;
             case PAINT_GRID_BACKGROUND:
@@ -2374,7 +2366,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
 
         // calculate the maximum y-label width (including eventual offsets)
         float ylabelwidth = Utils.calcTextWidth(mYLabelPaint,
-                label + (mYChartMin < 0 ? "----" : "+++")); // offsets
+                label + (mYChartMin < 0 ? "------" : "+++++")); // offsets
 
         if (mDrawYLabels) {
 
@@ -2858,7 +2850,8 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * array that holds positions where to draw the chart border lines
      */
     private BorderPosition[] mBorderPositions = new BorderPosition[]{
-            BorderPosition.BOTTOM
+            BorderPosition.BOTTOM,
+            BorderPosition.LEFT
     };
 
     /**
