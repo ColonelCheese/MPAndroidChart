@@ -80,6 +80,11 @@ public class DecartDataSet<T extends DecartEntry> {
     private Path mCustomScatterPath = null;
 
     /**
+     * if true - graph not drawing values
+     */
+    private boolean disableValue = false;
+
+    /**
      * Creates a new DataSet object with the given values it represents. Also, a
      * label that describes the DataSet can be specified. The label can also be
      * used to retrieve the DataSet from a ChartData object.
@@ -565,4 +570,11 @@ public class DecartDataSet<T extends DecartEntry> {
         return entries;
     }
 
+    public void setDisableValueDrawing(boolean disableValue) {
+        this.disableValue = disableValue;
+    }
+
+    public boolean getDisableValueDrawing() {
+        return disableValue;
+    }
 }
