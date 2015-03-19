@@ -60,8 +60,10 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
     protected void calcMinMax(boolean fixedValues) {
         super.calcMinMax(fixedValues);
 
-        if (mDeltaX == 0 && mData.getEntriesCount() > 0)
+        if (mDeltaX == 0 && mData.getEntriesCount() > 0) {
             mDeltaX = 1;
+            mTouchOffset = 1*0.025f;
+        }
     }
 
     @Override

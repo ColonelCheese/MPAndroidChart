@@ -216,6 +216,21 @@ public abstract class DecartGraphBase<T extends DecartData> extends
     protected float mDeltaX = 1f;
 
     /**
+     * the offset of x-values that allow touch
+     */
+    protected float mTouchOffset = 1f;
+
+    /**
+     * the offset in dp that allow touch
+     */
+    protected float mTouchOffsetDp = 75;
+
+    /**
+     * the offset in pixels that allow touch
+     */
+    protected float mTouchOffsetPixels = 1f;
+
+    /**
      * if true, touch gestures are enabled on the chart
      */
     protected boolean mTouchEnabled = true;
@@ -498,6 +513,8 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         mGridBackgroundPaint = new Paint();
         mGridBackgroundPaint.setStyle(Style.FILL);
         mGridBackgroundPaint.setColor(Color.rgb(240, 240, 240));
+
+        mTouchOffsetPixels = Utils.convertDpToPixel(mTouchOffsetDp);
     }
 
     /**
@@ -635,6 +652,8 @@ public abstract class DecartGraphBase<T extends DecartData> extends
 
         mDeltaY = Math.abs(mYChartMax - mYChartMin);
         mDeltaX = Math.abs(mXChartMax - mXChartMin);
+        mTouchOffset = mDeltaX * mTouchOffsetPixels / (getMeasuredWidth() - mOffsetLeft - mOffsetRight);
+
     }
 
     /**
@@ -3583,13 +3602,12 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         double yTouchVal = pts[1];
         double base = Math.floor(xTouchVal);
 
-        double touchOffset = mDeltaX * 0.025;
 
         // touch out of chart
-        if (xTouchVal < -touchOffset || xTouchVal > mDeltaX + touchOffset)
+        if (xTouchVal < -mTouchOffset || xTouchVal > mDeltaX + mTouchOffset)
             return null;
 
-        ArrayList<Pair<Integer, DecartEntry>> valsAtIndex = getYValsNearXValue((float) xTouchVal, (float) yTouchVal, (float) touchOffset);
+        ArrayList<Pair<Integer, DecartEntry>> valsAtIndex = getYValsNearXValue((float) xTouchVal, (float) yTouchVal, mTouchOffset);
 
         Pair<Integer, DecartEntry> selectedEntry = Utils.getClosestDataSetIndex(valsAtIndex, (float) xTouchVal, (float) yTouchVal);
 
