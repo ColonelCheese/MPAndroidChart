@@ -11,6 +11,7 @@ import com.github.mikephil.charting.data.DecartDataSet;
 import com.github.mikephil.charting.data.DecartEntry;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -21,6 +22,8 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
 
     private float backgroundInkingMultiplier = 1.2f;
+
+    private List<RectF> filledRects = new LinkedList<>();
 
     /**
      * enum that defines the shape that is drawn where the values are
@@ -62,7 +65,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
         if (mDeltaX == 0 && mData.getEntriesCount() > 0) {
             mDeltaX = 1;
-            mTouchOffset = 1*0.025f;
+            mTouchOffset = 1 * 0.025f;
         }
     }
 
@@ -190,13 +193,11 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                     CPoint next = points.get(j + 1);
                     point.dx = ((next.x - point.x) * mCubicIntensity);
                     point.dy = ((next.y - point.y) * mCubicIntensity);
-                }
-                else if (j == points.size() - 1) {
+                } else if (j == points.size() - 1) {
                     CPoint prev = points.get(j - 1);
                     point.dx = ((point.x - prev.x) * mCubicIntensity);
                     point.dy = ((point.y - prev.y) * mCubicIntensity);
-                }
-                else {
+                } else {
                     CPoint next = points.get(j + 1);
                     CPoint prev = points.get(j - 1);
                     point.dx = ((next.x - prev.x) * mCubicIntensity);
@@ -206,8 +207,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                 // create the cubic-spline path
                 if (j == 0) {
                     path.moveTo(point.x, point.y * mPhaseY);
-                }
-                else {
+                } else {
                     CPoint prev = points.get(j - 1);
                     path.cubicTo(prev.x + prev.dx, (prev.y + prev.dy) * mPhaseY, point.x
                                     - point.dx,
@@ -249,12 +249,24 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
     @Override
     protected void drawValues() {
+        filledRects.clear();
         // if values are drawn
         if (mDrawYValues && mData.getEntriesCount() < mMaxVisibleCount * mTrans.getScaleX()) {
 
             ArrayList<DecartDataSet> dataSets = mData
                     .getDataSets();
 
+            for (int i = 0; i < mData.getDataSetCount(); i++) {
+                DecartDataSet dataSet = dataSets.get(i);
+                if (!dataSet.getDisableValueDrawing()) {
+                    ArrayList<DecartEntry> entries = dataSet.getEntries();
+                    float[] positions = mTrans.generateTransformedValuesDecart(entries, mPhaseY);
+                    for (int j = 0; j < positions.length * mPhaseX; j += 2) {
+                        float shapeSize = dataSet.getScatterShapeSize();
+                        filledRects.add(new RectF(positions[j] - shapeSize / 2, positions[j + 1] - shapeSize / 2, positions[j] + shapeSize / 2, positions[j + 1] + shapeSize / 2));
+                    }
+                }
+            }
             for (int i = 0; i < mData.getDataSetCount(); i++) {
 
                 DecartDataSet dataSet = dataSets.get(i);
@@ -267,11 +279,13 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
                     for (int j = 0; j < positions.length * mPhaseX; j += 2) {
 
-                        if (isOffContentRight(positions[j]))
+                        float pointX = positions[j];
+                        if (isOffContentRight(pointX))
                             break;
 
-                        if (isOffContentLeft(positions[j]) || isOffContentTop(positions[j + 1])
-                                || isOffContentBottom(positions[j + 1]))
+                        float pointY = positions[j + 1];
+                        if (isOffContentLeft(pointX) || isOffContentTop(pointY)
+                                || isOffContentBottom(pointY))
                             continue;
 
                         String shapeLabel = getShapeLabel(dataSet, j / 2);
@@ -285,15 +299,53 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                             float textWidth = mValuePaint.measureText(shapeLabel);
                             mGridBackgroundPaint.setAlpha(200);
                             //FIXME: replace magic numbers by dimens and add separate Paint for text bg
-                            RectF rect = new RectF(positions[j] - textWidth / 2 - 4,
-                                    (positions[j + 1] - shapeSize - mValuePaint.getTextSize()),
-                                    (positions[j] + textWidth / 2 + 4),
-                                    (positions[j + 1] - shapeSize) + 5);
+                            RectF rect = new RectF(
+                                    pointX + shapeSize + 4,
+                                    pointY - mValuePaint.getTextSize() + 5,
+                                    pointX + shapeSize + textWidth + 4,
+                                    pointY + mValuePaint.getTextSize() + 5);
+                            boolean intersects = false;
+                            for (RectF filledRect : filledRects) {
+                                if (rect.intersect(filledRect)) {
+                                    intersects = true;
+                                    break;
+                                }
+                            }
+                            if (intersects) {
+                                //try to draw on left
+                                RectF rectL = new RectF(
+                                        pointX - shapeSize - textWidth - 4,
+                                        pointY - mValuePaint.getTextSize() + 5,
+                                        pointX - shapeSize - 4,
+                                        pointY + mValuePaint.getTextSize() + 5);
+                                boolean intersectsL = false;
+                                for (RectF filledRect : filledRects) {
+                                    if (rectL.intersect(filledRect)) {
+                                        intersectsL = true;
+                                        break;
+                                    }
+                                }
+                                if (intersectsL) {
+                                    continue;
+                                } else {
+                                    mDrawCanvas.drawRoundRect(rectL, 8f, 8f,
+                                            mGridBackgroundPaint);
+                                    mDrawCanvas.drawText(shapeLabel,
+                                            pointX - textWidth / 2f - 4 - shapeSize,
+                                            pointY + mValuePaint.getTextSize() / 2,
+                                            mValuePaint);
+                                    filledRects.add(new RectF(rectL.left, pointY - shapeSize / 2, pointX + shapeSize / 2, pointY + shapeSize / 2));
+                                    continue;
+                                }
+                            }
+                            //drawTextOnRightSide:
                             mDrawCanvas.drawRoundRect(rect, 8f, 8f,
                                     mGridBackgroundPaint);
-                            mDrawCanvas.drawText(shapeLabel, positions[j],
-                                    positions[j + 1] - shapeSize,
+                            mDrawCanvas.drawText(shapeLabel,
+                                    pointX + textWidth / 2f + 4 + shapeSize,
+                                    pointY + mValuePaint.getTextSize() / 2,
                                     mValuePaint);
+                            filledRects.add(new RectF(pointX - shapeSize / 2, pointY - shapeSize / 2, rect.right, pointY + shapeSize / 2));
                         }
                     }
                 }
