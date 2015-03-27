@@ -88,7 +88,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
             if (shape == GraphShape.SMOOTHEDLINE) {
 
                 drawLine(valuePoints);
-
+                getPaintColor(dataSet, 0);
 
             } else {
 
