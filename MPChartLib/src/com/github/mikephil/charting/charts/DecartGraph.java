@@ -98,7 +98,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                         break;
 
                     // make sure the lines don't do shitty things outside bounds
-                    if (j != 0 && isOffContentLeft(valuePoints[j - 1])
+                    if (j != 0 && isOffContentLeft(valuePoints[j])
                             && isOffContentTop(valuePoints[j + 1])
                             && isOffContentBottom(valuePoints[j + 1]))
                         continue;
