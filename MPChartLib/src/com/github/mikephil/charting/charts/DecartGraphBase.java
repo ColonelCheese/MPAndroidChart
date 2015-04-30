@@ -2555,8 +2555,12 @@ public abstract class DecartGraphBase<T extends DecartData> extends
             mXLabels.mEntries[1] = mXChartMax;
 
         } else {
-
-            double first = Math.ceil(xMin / interval) * interval;
+            double first;
+            if (xMax - xMin > 5) {
+                first = Math.round(xMin);
+            } else {
+                first = Math.ceil(xMin / interval) * interval;
+            }
             double last = Utils.nextUp(Math.floor(xMax / interval) * interval);
 
             double f;
