@@ -2514,7 +2514,6 @@ public abstract class DecartGraphBase<T extends DecartData> extends
                     xMin = 0;
                 xMax = (float) Math.max(p1.x, p2.x);
             }
-
         } else {
 
             if (!mTrans.isInvertXAxisEnabled()) {
@@ -2561,19 +2560,16 @@ public abstract class DecartGraphBase<T extends DecartData> extends
             double last = Utils.nextUp(Math.floor(xMax / interval) * interval);
 
             double f;
-            int i;
             int n = 0;
             for (f = first; f <= last; f += interval) {
                 ++n;
             }
 
-            if (mXLabels.mEntries.length < n) {
-                // Ensure stops contains at least numStops elements.
-                mXLabels.mEntries = new float[n];
-            }
+            int j;
+            mXLabels.mEntries = new float[n];
 
-            for (f = first, i = 0; i < n; f += interval, ++i) {
-                mXLabels.mEntries[i] = (float) f;
+            for (f = first, j = 0; j < n; f += interval, ++j) {
+                mXLabels.mEntries[j] = (float) f;
             }
         }
 
