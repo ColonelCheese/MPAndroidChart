@@ -45,21 +45,6 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
     }
 
     @Override
-    protected void prepareContentRect() {
-        if (isEmpty()) {
-            super.prepareContentRect();
-        } else {
-
-            float offset = mData.getGreatestShapeSize() / 2f;
-
-            mContentRect.set(mOffsetLeft - offset,
-                    mOffsetTop,
-                    getWidth() - mOffsetRight + offset,
-                    getHeight() - mOffsetBottom);
-        }
-    }
-
-    @Override
     protected void calcMinMax(boolean fixedValues) {
         super.calcMinMax(fixedValues);
 
@@ -291,7 +276,6 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                         String shapeLabel = getShapeLabel(dataSet, j / 2);
 
                         if (mDrawUnitInChart) {
-
                             mDrawCanvas.drawText(shapeLabel,
                                     positions[j],
                                     positions[j + 1] - shapeSize, mValuePaint);
@@ -328,24 +312,28 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                                 if (intersectsL) {
                                     continue;
                                 } else {
-                                    mDrawCanvas.drawRoundRect(rectL, 8f, 8f,
-                                            mGridBackgroundPaint);
-                                    mDrawCanvas.drawText(shapeLabel,
-                                            pointX - textWidth / 2f - 4 - shapeSize,
-                                            pointY + mValuePaint.getTextSize() / 2,
-                                            mValuePaint);
-                                    filledRects.add(new RectF(rectL.left, pointY - shapeSize / 2, pointX + shapeSize / 2, pointY + shapeSize / 2));
+                                    if (!isOffContentRect(rectL)) {
+                                        mDrawCanvas.drawRoundRect(rectL, 8f, 8f,
+                                                mGridBackgroundPaint);
+                                        mDrawCanvas.drawText(shapeLabel,
+                                                pointX - textWidth / 2f - 4 - shapeSize,
+                                                pointY + mValuePaint.getTextSize() / 2,
+                                                mValuePaint);
+                                        filledRects.add(new RectF(rectL.left, pointY - shapeSize / 2, pointX + shapeSize / 2, pointY + shapeSize / 2));
+                                    }
                                     continue;
                                 }
                             }
                             //drawTextOnRightSide:
-                            mDrawCanvas.drawRoundRect(rect, 8f, 8f,
-                                    mGridBackgroundPaint);
-                            mDrawCanvas.drawText(shapeLabel,
-                                    pointX + textWidth / 2f + 4 + shapeSize,
-                                    pointY + mValuePaint.getTextSize() / 2,
-                                    mValuePaint);
-                            filledRects.add(new RectF(pointX - shapeSize / 2, pointY - shapeSize / 2, rect.right, pointY + shapeSize / 2));
+                            if (!isOffContentRect(rect)) {
+                                mDrawCanvas.drawRoundRect(rect, 8f, 8f,
+                                        mGridBackgroundPaint);
+                                mDrawCanvas.drawText(shapeLabel,
+                                        pointX + textWidth / 2f + 4 + shapeSize,
+                                        pointY + mValuePaint.getTextSize() / 2,
+                                        mValuePaint);
+                                filledRects.add(new RectF(pointX - shapeSize / 2, pointY - shapeSize / 2, rect.right, pointY + shapeSize / 2));
+                            }
                         }
                     }
                 }

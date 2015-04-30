@@ -3029,6 +3029,10 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         }
     }
 
+    protected boolean isOffContentRect(RectF rectF) {
+        return !mContentRect.contains(rectF);
+    }
+
     /**
      * returns true if the specified point (x-axis) exceeds the limits of what
      * is visible to the right side
