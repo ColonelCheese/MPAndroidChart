@@ -1,6 +1,7 @@
 package com.github.mikephil.charting.charts;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -29,7 +30,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
      * enum that defines the shape that is drawn where the values are
      */
     public enum GraphShape {
-        CROSS, TRIANGLE, CIRCLE, SQUARE, CUSTOM, LINE, SMOOTHEDLINE
+        CROSS, TRIANGLE, CIRCLE, STROKE_CIRCLE, SQUARE, CUSTOM, LINE, SMOOTHEDLINE
     }
 
     public DecartGraph(Context context) {
@@ -72,8 +73,8 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
             if (shape == GraphShape.SMOOTHEDLINE) {
 
-                drawLine(valuePoints);
                 getPaintColor(dataSet, 0);
+                drawLine(valuePoints);
 
             } else {
 
@@ -95,6 +96,16 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
                     if (shape == GraphShape.SQUARE) {
                         drawSquare(shapeHalf, valuePoints, j, sizeMultiplier);
+                    } else if (shape == GraphShape.STROKE_CIRCLE){
+                        Paint tmpPaint = new Paint(mRenderPaint);
+                        tmpPaint.setStyle(Paint.Style.STROKE);
+                        tmpPaint.setStrokeWidth(3f);
+                        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier * backgroundInkingMultiplier,
+                                tmpPaint);
+                        tmpPaint.setStyle(Paint.Style.FILL);
+                        tmpPaint.setColor(Color.WHITE);
+                        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier * backgroundInkingMultiplier,
+                                tmpPaint);
                     } else if (shape == GraphShape.CIRCLE) {
                         //draw inking
                         mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier * backgroundInkingMultiplier,
