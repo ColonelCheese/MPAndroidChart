@@ -356,9 +356,9 @@ public class LineChart extends BarLineChartBase<LineData> {
 
     @Override
     protected void drawValues() {
-
         // if values are drawn
-        if (mDrawYValues && mData.getYValCount() < mMaxVisibleCount * mTrans.getScaleX()) {
+        /** check zoom to show values*/
+        if (mDeltaX / mTrans.getScaleX() < 14 && mDrawYValues && mData.getYValCount() < mMaxVisibleCount * mTrans.getScaleX()) {
 
             ArrayList<LineDataSet> dataSets = mData.getDataSets();
 
