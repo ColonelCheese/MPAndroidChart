@@ -32,13 +32,11 @@ public abstract class LabelBase {
      * @param size
      */
     public void setTextSize(float size) {
-
-        if (size > 16f)
-            size = 16f;
-        if (size < 6f)
-            size = 6f;
-
         mTextSize = Utils.convertDpToPixel(size);
+    }
+
+    public void setRawTextSize(float size) {
+        mTextSize = size;
     }
 
     /**
