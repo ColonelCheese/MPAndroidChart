@@ -31,7 +31,7 @@ public class DecartDataSet<T extends DecartEntry> {
     /**
      * the minimum y-value in the y-value array
      */
-    protected float mYMin = 0.0f;
+    protected float mYMin = Float.POSITIVE_INFINITY;
 
     /**
      * the total sum of all y-values
@@ -46,7 +46,7 @@ public class DecartDataSet<T extends DecartEntry> {
     /**
      * the minimum x-value in the x-value array
      */
-    protected float mXMin = 0.0f;
+    protected float mXMin = Float.POSITIVE_INFINITY;
 
     /**
      * the total sum of all x-values

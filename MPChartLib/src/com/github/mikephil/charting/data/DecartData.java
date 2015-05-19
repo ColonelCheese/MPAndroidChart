@@ -241,13 +241,13 @@ public class DecartData<T extends DecartDataSet<? extends DecartEntry>> {
             mXMax = dataSets.get(0).getXMax();
 
             for (int i = 0; i < dataSets.size(); i++) {
-                if (dataSets.get(i).getYMin() < mYMin)
+                if (dataSets.get(i).getYMin() < mYMin || mYMin == Float.POSITIVE_INFINITY)
                     mYMin = dataSets.get(i).getYMin();
 
                 if (dataSets.get(i).getYMax() > mYMax)
                     mYMax = dataSets.get(i).getYMax();
 
-                if (dataSets.get(i).getXMin() < mXMin)
+                if (dataSets.get(i).getXMin() < mXMin || mXMin == Float.POSITIVE_INFINITY)
                     mXMin = dataSets.get(i).getXMin();
 
                 if (dataSets.get(i).getXMax() > mXMax)
