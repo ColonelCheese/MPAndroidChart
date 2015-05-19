@@ -120,14 +120,14 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
                     mSavedDist = spacing(event);
 
                     if (mSavedDist > 10f) {
-
-                        if (mChart.isPinchZoomEnabled()) {
-                            mTouchMode = PINCH_ZOOM;
-                        } else {
-                            if (mSavedXDist > mSavedYDist)
-                                mTouchMode = X_ZOOM;
-                            else
-                                mTouchMode = Y_ZOOM;
+                        if (mSavedXDist > 40f && mSavedYDist > 40f ){
+                            if (mChart.isPinchZoomEnabled()) {
+                                mTouchMode = PINCH_ZOOM;
+                            }
+                        } else if (mSavedXDist > mSavedYDist) {
+                            mTouchMode = X_ZOOM;
+                        } else if (mSavedYDist > mSavedXDist) {
+                            mTouchMode = Y_ZOOM;
                         }
                     }
 
