@@ -446,7 +446,6 @@ public class DecartDataSet<T extends DecartEntry> {
         return mColors.get(0);
     }
 
-
     public boolean containsEntry(DecartEntry entry) {
         return mEntries.contains(entry);
     }

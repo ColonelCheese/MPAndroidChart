@@ -2,6 +2,7 @@ package com.github.mikephil.charting.charts;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -10,6 +11,7 @@ import android.util.AttributeSet;
 import com.github.mikephil.charting.data.DecartData;
 import com.github.mikephil.charting.data.DecartDataSet;
 import com.github.mikephil.charting.data.DecartEntry;
+import com.github.mikephil.charting.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -30,7 +32,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
      * enum that defines the shape that is drawn where the values are
      */
     public enum GraphShape {
-        CROSS, TRIANGLE, CIRCLE, STROKE_CIRCLE, SQUARE, CUSTOM, LINE, SMOOTHEDLINE
+        CROSS, TRIANGLE, CIRCLE, STROKE_CIRCLE, SQUARE, CUSTOM, LINE, SMOOTHEDLINE, SMOOTHED_AND_DASHED_LINE
     }
 
     public DecartGraph(Context context) {
@@ -75,7 +77,8 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
                 getPaintColor(dataSet, 0);
                 drawLine(valuePoints);
-
+            } else if (shape == GraphShape.SMOOTHED_AND_DASHED_LINE) {
+                drawDashedLine(valuePoints, dataSet.getColor(0), dataSet.getColor(1));
             } else {
 
                 for (int j = 0; j < valuePoints.length * mPhaseX; j += 2) {
@@ -96,7 +99,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
                     if (shape == GraphShape.SQUARE) {
                         drawSquare(shapeHalf, valuePoints, j, sizeMultiplier);
-                    } else if (shape == GraphShape.STROKE_CIRCLE){
+                    } else if (shape == GraphShape.STROKE_CIRCLE) {
                         Paint tmpPaint = new Paint(mRenderPaint);
                         tmpPaint.setStyle(Paint.Style.STROKE);
                         tmpPaint.setStrokeWidth(3f);
@@ -173,7 +176,30 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
     private void drawLine(float[] valuePoints) {
         Paint.Style prevStyle = mRenderPaint.getStyle();
         mRenderPaint.setStyle(Paint.Style.STROKE);
+        Path path = getSmootedLinePath(valuePoints);
+        mDrawCanvas.drawPath(path, mRenderPaint);
+        mRenderPaint.setStyle(prevStyle);
+    }
 
+    private void drawDashedLine(float[] valuePoints, int firstColor, int secondColor) {
+        Paint.Style prevStyle = mRenderPaint.getStyle();
+        mRenderPaint.setStyle(Paint.Style.STROKE);
+        Path path = getSmootedLinePath(valuePoints);
+
+        mRenderPaint.setColor(firstColor);
+        float lineHeight = Utils.convertDpToPixel(15);
+        mRenderPaint.setPathEffect(new DashPathEffect(new float[]{lineHeight, lineHeight}, 0));
+        mDrawCanvas.drawPath(path, mRenderPaint);
+
+        mRenderPaint.setColor(secondColor);
+        mRenderPaint.setPathEffect(new DashPathEffect(new float[]{lineHeight, lineHeight}, lineHeight));
+        mDrawCanvas.drawPath(path, mRenderPaint);
+
+        mRenderPaint.setPathEffect(null);
+        mRenderPaint.setStyle(prevStyle);
+    }
+
+    private Path getSmootedLinePath(float[] valuePoints) {
         Path path = new Path();
         List<CPoint> points = new ArrayList<CPoint>();
         for (int j = 0; j < valuePoints.length; j += 2) {
@@ -211,8 +237,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                 }
             }
         }
-        mDrawCanvas.drawPath(path, mRenderPaint);
-        mRenderPaint.setStyle(prevStyle);
+        return path;
     }
 
     private void drawSquare(float shapeHalf, float[] valuePoints, int j, float sizeMultiplier) {
