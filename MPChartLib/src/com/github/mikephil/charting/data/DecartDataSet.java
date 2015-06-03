@@ -577,4 +577,8 @@ public class DecartDataSet<T extends DecartEntry> {
     public boolean getDisableValueDrawing() {
         return disableValue;
     }
+
+    public void setmLabel(String mLabel) {
+        this.mLabel = mLabel;
+    }
 }

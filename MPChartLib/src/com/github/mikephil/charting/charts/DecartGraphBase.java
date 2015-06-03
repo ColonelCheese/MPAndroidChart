@@ -545,6 +545,10 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         Log.i(LOG_TAG, "Data is set.");
     }
 
+    public T getmData() {
+        return mData;
+    }
+
     /**
      * Clears the chart from all data and refreshes it (by calling
      * invalidate()).
