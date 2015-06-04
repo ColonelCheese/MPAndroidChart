@@ -2263,7 +2263,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        if (w > 0 && h > 0) {
+        if (w > 0 && h > 0 && h < 5000) {
             // create a new bitmap with the new dimensions
             mDrawBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_4444);
             mDrawCanvas = new Canvas(mDrawBitmap);
