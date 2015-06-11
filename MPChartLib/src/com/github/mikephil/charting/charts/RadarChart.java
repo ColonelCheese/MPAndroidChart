@@ -130,9 +130,7 @@ public class RadarChart extends PieRadarChartBase<RadarData> {
 
         drawHighlights();
 
-        drawYLabels();
-
-        drawValues();
+                 drawValues();
 
         drawLegend();
 
@@ -493,6 +491,11 @@ public class RadarChart extends PieRadarChartBase<RadarData> {
                 mDrawCanvas.drawLines(pts, mHighlightPaint);
             }
         }
+    }
+
+    @Override
+    protected void drawHighlightsValues() {
+        //TODO need to implements
     }
 
     /**

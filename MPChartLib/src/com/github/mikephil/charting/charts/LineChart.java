@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import android.util.Log;
 
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 
 /**
  * Chart that draws lines, surfaces, circles, ...
- * 
+ *
  * @author Philipp Jahoda
  */
 public class LineChart extends BarLineChartBase<LineData> {
@@ -54,7 +55,7 @@ public class LineChart extends BarLineChartBase<LineData> {
         mHighlightPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mHighlightPaint.setStyle(Paint.Style.STROKE);
         mHighlightPaint.setStrokeWidth(2f);
-        mHighlightPaint.setColor(Color.rgb(255, 187, 115));        
+        mHighlightPaint.setColor(Color.rgb(255, 187, 115));
     }
 
     @Override
@@ -103,9 +104,44 @@ public class LineChart extends BarLineChartBase<LineData> {
         }
     }
 
+    @Override
+    protected void drawHighlightsValues() {
+        for (int i = 0; i < mIndicesToHightlight.length; i++) {
+            LineDataSet set = mData.getDataSetByIndex(mIndicesToHightlight[i]
+                    .getDataSetIndex());
+
+            if (set == null)
+                continue;
+
+            int xIndex = mIndicesToHightlight[i].getXIndex(); // get the
+            // x-position
+
+            if (xIndex > mDeltaX * mPhaseX)
+                continue;
+
+            float value = set.getYValForXIndex(xIndex);
+
+            float y = value * mPhaseY; // get the
+            // y-position
+
+            // make sure the values do not interfear with the circles
+            int valOffset = (int) (set.getCircleSize() * 1.75f);
+
+            float[] pts = new float[] {
+                    xIndex, y
+            };
+
+            mTrans.pointValuesToPixel(pts);
+
+            mDrawCanvas.drawText(mValueFormatter.getFormattedValue(value) + mUnit,
+                    pts[0],
+                    pts[1] - valOffset, mValuePaint);
+        }
+    }
+
     /**
      * Class needed for saving the points when drawing cubic-lines.
-     * 
+     *
      * @author Philipp Jahoda
      */
     protected class CPoint {
@@ -169,8 +205,8 @@ public class LineChart extends BarLineChartBase<LineData> {
 		Path spline = new Path();
 
 		ArrayList<CPoint> points = new ArrayList<CPoint>();
-		
-		for (Entry e : entries) {	    
+
+		for (Entry e : entries) {
 		    if(e != null)
 		        points.add(new CPoint(e.getXIndex(), e.getVal()));
 		}
@@ -309,7 +345,7 @@ public class LineChart extends BarLineChartBase<LineData> {
 
     /**
      * Generates the path that is used for filled drawing.
-     * 
+     *
      * @param entries
      * @return
      */
@@ -335,7 +371,7 @@ public class LineChart extends BarLineChartBase<LineData> {
 
     /**
      * Generates the path that is used for drawing a single line.
-     * 
+     *
      * @param entries
      * @return
      */
@@ -372,34 +408,38 @@ public class LineChart extends BarLineChartBase<LineData> {
                 if (!dataSet.isDrawCirclesEnabled())
                     valOffset = valOffset / 2;
 
-                ArrayList<Entry> entries = dataSet.getYVals();
+                drawValue(dataSet, valOffset);
+            }
+        }
+    }
 
-                float[] positions = mTrans.generateTransformedValuesLineScatter(entries, mPhaseY);
+    private void drawValue(LineDataSet dataSet, int valOffset){
+        ArrayList<Entry> entries = dataSet.getYVals();
 
-                for (int j = 0; j < positions.length * mPhaseX; j += 2) {
+        float[] positions = mTrans.generateTransformedValuesLineScatter(entries, mPhaseY);
 
-                    if (isOffContentRight(positions[j]))
-                        break;
+        for (int j = 0; j < positions.length * mPhaseX; j += 2) {
 
-                    if (isOffContentLeft(positions[j]) || isOffContentTop(positions[j + 1])
-                            || isOffContentBottom(positions[j + 1]))
-                        continue;
+            if (isOffContentRight(positions[j]))
+                break;
 
-                    float val = entries.get(j / 2).getVal();
+            if (isOffContentLeft(positions[j]) || isOffContentTop(positions[j + 1])
+                    || isOffContentBottom(positions[j + 1]))
+                continue;
 
-                    if (mDrawUnitInChart) {
+            float val = entries.get(j / 2).getVal();
 
-                        mDrawCanvas.drawText(mValueFormatter.getFormattedValue(val) + mUnit,
-                                positions[j],
-                                positions[j + 1]
-                                        - valOffset, mValuePaint);
-                    } else {
+            if (mDrawUnitInChart) {
 
-                        mDrawCanvas.drawText(mValueFormatter.getFormattedValue(val), positions[j],
-                                positions[j + 1] - valOffset,
-                                mValuePaint);
-                    }
-                }
+                mDrawCanvas.drawText(mValueFormatter.getFormattedValue(val) + mUnit,
+                        positions[j],
+                        positions[j + 1]
+                                - valOffset, mValuePaint);
+            } else {
+
+                mDrawCanvas.drawText(mValueFormatter.getFormattedValue(val), positions[j],
+                        positions[j + 1] - valOffset,
+                        mValuePaint);
             }
         }
     }

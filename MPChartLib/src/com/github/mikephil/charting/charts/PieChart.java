@@ -262,6 +262,11 @@ public class PieChart extends PieRadarChartBase<PieData> {
     }
 
     @Override
+    protected void drawHighlightsValues() {
+        //TODO need to implements
+    }
+
+    @Override
     protected void drawData() {
 
         float angle = mRotationAngle;

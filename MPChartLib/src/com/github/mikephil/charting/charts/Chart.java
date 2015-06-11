@@ -168,6 +168,9 @@ public abstract class Chart<T extends ChartData<? extends DataSet<? extends Entr
     /** if true, value highlightning is enabled */
     protected boolean mHighlightEnabled = true;
 
+    /** if true, value highlightning is enabled */
+    protected boolean mHighlightValuesEnabled = true;
+
     /** flag indicating if the legend is drawn of not */
     protected boolean mDrawLegend = true;
 
@@ -908,6 +911,11 @@ public abstract class Chart<T extends ChartData<? extends DataSet<? extends Entr
     protected abstract void drawHighlights();
 
     /**
+     * draws the text values of the chart that need highlightning
+     */
+    protected abstract void drawHighlightsValues();
+
+    /**
      * ################ ################ ################ ################
      */
     /** BELOW THIS CODE FOR HIGHLIGHTING */
@@ -1337,6 +1345,24 @@ public abstract class Chart<T extends ChartData<? extends DataSet<? extends Entr
      */
     public boolean isHighlightEnabled() {
         return mHighlightEnabled;
+    }
+
+    /**
+     * If set to true, highlighting value draw as text on chart.
+     *
+     * @param enabled
+     */
+    public void setHighlightValuesEnabled(boolean enabled) {
+        mHighlightValuesEnabled = enabled;
+    }
+
+    /**
+     * returns true if highlighting of values is enabled, false if not
+     *
+     * @return
+     */
+    public boolean isHighlightValuesEnabled() {
+        return mHighlightValuesEnabled;
     }
 
     /**

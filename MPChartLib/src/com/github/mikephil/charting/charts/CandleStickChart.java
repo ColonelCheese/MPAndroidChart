@@ -194,4 +194,9 @@ public class CandleStickChart extends BarLineChartBase<CandleData> {
         }
     }
 
+    @Override
+    protected void drawHighlightsValues() {
+        //TODO: need to implement
+    }
+
 }

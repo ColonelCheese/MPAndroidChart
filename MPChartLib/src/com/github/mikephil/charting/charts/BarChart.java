@@ -168,6 +168,11 @@ public class BarChart extends BarLineChartBase<BarData> {
     }
 
     @Override
+    protected void drawHighlightsValues() {
+        //TODO: need to implement
+    }
+
+    @Override
     protected void drawData() {
 
         ArrayList<BarDataSet> dataSets = mData.getDataSets();

@@ -214,6 +214,11 @@ public class ScatterChart extends BarLineChartBase<ScatterData> {
     }
 
     @Override
+    protected void drawHighlightsValues() {
+        //TODO need to implements
+    }
+
+    @Override
     protected void drawAdditional() {
 
     }
