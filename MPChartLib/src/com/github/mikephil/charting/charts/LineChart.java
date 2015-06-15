@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
 
@@ -133,9 +134,9 @@ public class LineChart extends BarLineChartBase<LineData> {
 
             mTrans.pointValuesToPixel(pts);
 
-            mDrawCanvas.drawText(mValueFormatter.getFormattedValue(value) + mUnit,
+            checkAndPaintText(mValueFormatter.getFormattedValue(value) + mUnit,
                     pts[0],
-                    pts[1] - valOffset, mValuePaint);
+                    pts[1] - valOffset);
         }
     }
 
@@ -430,17 +431,28 @@ public class LineChart extends BarLineChartBase<LineData> {
             float val = entries.get(j / 2).getVal();
 
             if (mDrawUnitInChart) {
-
-                mDrawCanvas.drawText(mValueFormatter.getFormattedValue(val) + mUnit,
+                checkAndPaintText(mValueFormatter.getFormattedValue(val) + mUnit,
                         positions[j],
-                        positions[j + 1]
-                                - valOffset, mValuePaint);
+                        positions[j + 1] - valOffset);
             } else {
-
-                mDrawCanvas.drawText(mValueFormatter.getFormattedValue(val), positions[j],
-                        positions[j + 1] - valOffset,
-                        mValuePaint);
+                checkAndPaintText(mValueFormatter.getFormattedValue(val),
+                        positions[j],
+                        positions[j + 1] - valOffset);
             }
+        }
+    }
+
+    private void checkAndPaintText(String text, float x, float y){
+        Rect bounds = new Rect();
+        mValuePaint.getTextBounds(text,
+                0,
+                text.length(),
+                bounds);
+        if (x - mOffsetLeft > bounds.width() / 2) {
+            mDrawCanvas.drawText(text,
+                    x,
+                    y,
+                    mValuePaint);
         }
     }
 
