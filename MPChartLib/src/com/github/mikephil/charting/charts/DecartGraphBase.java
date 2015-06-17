@@ -33,6 +33,7 @@ import com.github.mikephil.charting.interfaces.ChartInterface;
 import com.github.mikephil.charting.interfaces.OnChartGestureListener;
 import com.github.mikephil.charting.interfaces.OnDecartGraphValueSelectedListener;
 import com.github.mikephil.charting.interfaces.OnDrawListener;
+import com.github.mikephil.charting.interfaces.OnZoomChangedListener;
 import com.github.mikephil.charting.listener.DecartGraphTouchListener;
 import com.github.mikephil.charting.renderer.DecartTransformer;
 import com.github.mikephil.charting.utils.DecartHighlight;
@@ -270,6 +271,11 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * listener that is called when a value on the chart is selected
      */
     protected OnDecartGraphValueSelectedListener mSelectionListener;
+
+    /**
+     * listener that is called when a scale value is changed
+     */
+    protected OnZoomChangedListener mOnZoomChangedListener;
 
     /**
      * text that is displayed when the chart is empty
@@ -1473,6 +1479,17 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         this.mSelectionListener = l;
     }
 
+
+    /**
+     * set a zoom listener for the chart
+     *
+     * @param l
+     */
+    public void setOnZoomChangedListener(OnZoomChangedListener l) {
+        this.mOnZoomChangedListener = l;
+    }
+
+
     /**
      * Sets a gesture-listener for the chart for custom callbacks when executing
      * gestures on the chart surface.
@@ -1548,6 +1565,25 @@ public abstract class DecartGraphBase<T extends DecartData> extends
     public float getYChartMax() {
         return mYChartMax;
     }
+
+    /**
+     * returns the lowest value the chart can display
+     *
+     * @return
+     */
+    public float getXChartMin() {
+        return mXChartMin;
+    }
+
+    /**
+     * returns the highest value the chart can display
+     *
+     * @return
+     */
+    public float getXChartMax() {
+        return mXChartMax;
+    }
+
 
     /**
      * returns the current y-min value across all DataSets
@@ -3118,11 +3154,23 @@ public abstract class DecartGraphBase<T extends DecartData> extends
     /** CODE BELOW THIS RELATED TO SCALING AND GESTURES */
 
     /**
+     * refresh method
+     */
+
+    public Matrix refresh(Matrix save){
+        Matrix result = mTrans.refresh(save, this);
+        if (mOnZoomChangedListener != null){
+            mOnZoomChangedListener.onZoomChanged(this);
+        }
+        return result;
+    }
+
+    /**
      * Zooms in by 1.4f, into the charts center. center.
      */
     public void zoomIn() {
         Matrix save = mTrans.zoomIn(getWidth() / 2f, -(getHeight() / 2f));
-        mTrans.refresh(save, this);
+        refresh(save);
     }
 
     /**
@@ -3130,7 +3178,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      */
     public void zoomOut() {
         Matrix save = mTrans.zoomOut(getWidth() / 2f, -(getHeight() / 2f));
-        mTrans.refresh(save, this);
+        refresh(save);
     }
 
     /**
@@ -3144,7 +3192,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      */
     public void zoom(float scaleX, float scaleY, float x, float y) {
         Matrix save = mTrans.zoom(scaleX, scaleY, x, -y);
-        mTrans.refresh(save, this);
+        refresh(save);
     }
 
     /**
@@ -3153,7 +3201,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      */
     public void fitScreen() {
         Matrix save = mTrans.fitScreen();
-        mTrans.refresh(save, this);
+        refresh(save);
     }
 
     /**

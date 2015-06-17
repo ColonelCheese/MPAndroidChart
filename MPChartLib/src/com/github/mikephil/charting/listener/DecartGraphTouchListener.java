@@ -176,7 +176,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
         }
 
         // Perform the transformation, update the chart
-        mMatrix = mChart.getTransformer().refresh(mMatrix, mChart);
+        mMatrix = mChart.refresh(mMatrix);
 
         return true; // indicate event was handled
     }
