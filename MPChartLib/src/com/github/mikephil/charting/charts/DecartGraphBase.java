@@ -3233,7 +3233,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * @param xIndex the index on the x-axis to center to
      * @param yVal   the value ont he y-axis to center to
      */
-    public synchronized void centerViewPort(final int xIndex, final float yVal) {
+    public synchronized void centerViewPort(final float xIndex, final float yVal) {
 
         float indicesInView = mDeltaX / mTrans.getScaleX();
         float valsInView = mDeltaY / mTrans.getScaleY();
