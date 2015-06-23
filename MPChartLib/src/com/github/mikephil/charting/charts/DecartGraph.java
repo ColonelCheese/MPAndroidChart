@@ -32,7 +32,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
      * enum that defines the shape that is drawn where the values are
      */
     public enum GraphShape {
-        CROSS, TRIANGLE, CIRCLE, STROKE_CIRCLE, SQUARE, CUSTOM, LINE, SMOOTHEDLINE, SMOOTHED_AND_DASHED_LINE
+        CROSS, TRIANGLE, CIRCLE, STROKE_CIRCLE, SQUARE, CUSTOM, LINE, DASHED_LINE, SMOOTHEDLINE, SMOOTHED_AND_DASHED_LINE
     }
 
     public DecartGraph(Context context) {
@@ -74,11 +74,15 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
             GraphShape shape = dataSet.getScatterShape();
 
             if (shape == GraphShape.SMOOTHEDLINE) {
-
                 getPaintColor(dataSet, 0);
-                drawLine(valuePoints);
+                drawLine(valuePoints, true);
             } else if (shape == GraphShape.SMOOTHED_AND_DASHED_LINE) {
-                drawDashedLine(valuePoints, dataSet.getColor(0), dataSet.getColor(1));
+                drawDashedLine(valuePoints, dataSet.getColor(0), dataSet.getColor(1), true);
+            } else if (shape == GraphShape.LINE) {
+                getPaintColor(dataSet, 0);
+                drawLine(valuePoints, false);
+            } else if (shape == GraphShape.DASHED_LINE) {
+                drawDashedLine(valuePoints, dataSet.getColor(0), dataSet.getColor(1), false);
             } else {
 
                 for (int j = 0; j < valuePoints.length * mPhaseX; j += 2) {
@@ -161,31 +165,43 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                         // transform the provided custom path
                         mTrans.pathValueToPixel(customShape);
                         mDrawCanvas.drawPath(customShape, mRenderPaint);
-                    } else if (shape == GraphShape.LINE) {
-                        if (j > 1) {
-                            mDrawCanvas.drawLine(valuePoints[j - 2], valuePoints[j - 1],
-                                    valuePoints[j], valuePoints[j + 1], mRenderPaint);
-                        }
-//                        drawSquare(shapeHalf, valuePoints, j, sizeMultiplier);
                     }
                 }
             }
         }
     }
 
-    private void drawLine(float[] valuePoints) {
+    private void drawLine(float[] valuePoints, boolean smooth) {
         Paint.Style prevStyle = mRenderPaint.getStyle();
         mRenderPaint.setStyle(Paint.Style.STROKE);
-        Path path = getSmootedLinePath(valuePoints);
+        Path path;
+        if (smooth) {
+            path = getSmootedLinePath(valuePoints);
+        } else {
+            path = getLinePath(valuePoints);
+        }
         mDrawCanvas.drawPath(path, mRenderPaint);
         mRenderPaint.setStyle(prevStyle);
     }
 
-    private void drawDashedLine(float[] valuePoints, int firstColor, int secondColor) {
+    private Path getLinePath(float[] valuePoints) {
+        Path path = new Path();
+        path.moveTo(valuePoints[0], valuePoints[1]);
+        for (int j = 2; j < valuePoints.length; j += 2) {
+            path.lineTo(valuePoints[j], valuePoints[j + 1]);
+        }
+        return path;
+    }
+
+    private void drawDashedLine(float[] valuePoints, int firstColor, int secondColor, boolean smooth) {
         Paint.Style prevStyle = mRenderPaint.getStyle();
         mRenderPaint.setStyle(Paint.Style.STROKE);
-        Path path = getSmootedLinePath(valuePoints);
-
+        Path path;
+        if (smooth) {
+            path = getSmootedLinePath(valuePoints);
+        } else {
+            path = getLinePath(valuePoints);
+        }
         mRenderPaint.setColor(firstColor);
         float lineHeight = Utils.convertDpToPixel(15);
         mRenderPaint.setPathEffect(new DashPathEffect(new float[]{lineHeight, lineHeight}, 0));
