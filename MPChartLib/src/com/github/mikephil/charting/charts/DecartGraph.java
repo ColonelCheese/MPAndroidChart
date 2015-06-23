@@ -166,7 +166,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                             mDrawCanvas.drawLine(valuePoints[j - 2], valuePoints[j - 1],
                                     valuePoints[j], valuePoints[j + 1], mRenderPaint);
                         }
-                        drawSquare(shapeHalf, valuePoints, j, sizeMultiplier);
+//                        drawSquare(shapeHalf, valuePoints, j, sizeMultiplier);
                     }
                 }
             }
