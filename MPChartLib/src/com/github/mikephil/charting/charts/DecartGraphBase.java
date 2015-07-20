@@ -633,7 +633,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
             }
 
             space = Math
-                    .abs(Math.abs(Math.max(Math.abs(mXChartMax), Math.abs(mXChartMin))) / 100f * 20f);
+                    .abs(Math.abs(Math.max(Math.abs(mXChartMax), Math.abs(mXChartMin))) / 100f * 50f);
 
             if (Math.abs(mXChartMax - mXChartMin) < 0.00001f) {
                 if (Math.abs(mXChartMax) < 10f)
