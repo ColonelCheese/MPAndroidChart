@@ -565,7 +565,9 @@ public class DecartDataSet<T extends DecartEntry> {
                 entries.add(entry);
             }
         }
-
+        if (entries.isEmpty()) {
+            return getEntriesInRange(x, y, round * 2f);
+        }
         return entries;
     }
 
