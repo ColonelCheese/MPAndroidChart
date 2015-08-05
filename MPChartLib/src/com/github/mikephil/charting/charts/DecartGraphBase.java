@@ -3687,7 +3687,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         for (int i = 0; i < mData.getDataSetCount(); i++) {
 
             // extract all y-values from all DataSets at the given x-index
-            List<DecartEntry> decartEntries = mData.getDataSetByIndex(i).getEntriesInRange(xValue, yValue, round);
+            List<DecartEntry> decartEntries = mData.getDataSetByIndex(i).getEntriesInRange(xValue, yValue, round, 0);
 
             for (DecartEntry decartEntry : decartEntries) {
                 vals.add(new Pair(i, decartEntry));

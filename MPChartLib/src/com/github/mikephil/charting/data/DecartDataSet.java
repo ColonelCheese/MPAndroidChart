@@ -14,6 +14,12 @@ import java.util.List;
 public class DecartDataSet<T extends DecartEntry> {
 
     /**
+     * on tap if there is no any point we try to search on wider range.
+     * This is number of search attempts
+     */
+    private static final int MAX_SEARCH_POINT_ATTEMPTS = 5;
+
+    /**
      * arraylist representing all colors that are used for this DataSet
      */
     protected ArrayList<Integer> mColors = null;
@@ -555,7 +561,7 @@ public class DecartDataSet<T extends DecartEntry> {
     }
 
 
-    public List<DecartEntry> getEntriesInRange(float x, float y, float round) {
+    public List<DecartEntry> getEntriesInRange(float x, float y, float round, int attemptNum) {
 
         List<DecartEntry> entries = new ArrayList<DecartEntry>();
 
@@ -565,8 +571,8 @@ public class DecartDataSet<T extends DecartEntry> {
                 entries.add(entry);
             }
         }
-        if (entries.isEmpty()) {
-            return getEntriesInRange(x, y, round * 2f);
+        if (entries.isEmpty() && attemptNum <= MAX_SEARCH_POINT_ATTEMPTS) {
+            return getEntriesInRange(x, y, round * 2f, ++attemptNum);
         }
         return entries;
     }
