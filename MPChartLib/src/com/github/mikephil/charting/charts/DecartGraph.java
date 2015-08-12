@@ -172,16 +172,18 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
     }
 
     private void drawLine(float[] valuePoints, boolean smooth) {
-        Paint.Style prevStyle = mRenderPaint.getStyle();
-        mRenderPaint.setStyle(Paint.Style.STROKE);
-        Path path;
-        if (smooth) {
-            path = getSmootedLinePath(valuePoints);
-        } else {
-            path = getLinePath(valuePoints);
+        if (valuePoints.length > 1) {
+            Paint.Style prevStyle = mRenderPaint.getStyle();
+            mRenderPaint.setStyle(Paint.Style.STROKE);
+            Path path;
+            if (smooth) {
+                path = getSmootedLinePath(valuePoints);
+            } else {
+                path = getLinePath(valuePoints);
+            }
+            mDrawCanvas.drawPath(path, mRenderPaint);
+            mRenderPaint.setStyle(prevStyle);
         }
-        mDrawCanvas.drawPath(path, mRenderPaint);
-        mRenderPaint.setStyle(prevStyle);
     }
 
     private Path getLinePath(float[] valuePoints) {
@@ -194,25 +196,27 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
     }
 
     private void drawDashedLine(float[] valuePoints, int firstColor, int secondColor, boolean smooth) {
-        Paint.Style prevStyle = mRenderPaint.getStyle();
-        mRenderPaint.setStyle(Paint.Style.STROKE);
-        Path path;
-        if (smooth) {
-            path = getSmootedLinePath(valuePoints);
-        } else {
-            path = getLinePath(valuePoints);
+        if (valuePoints.length > 1) {
+            Paint.Style prevStyle = mRenderPaint.getStyle();
+            mRenderPaint.setStyle(Paint.Style.STROKE);
+            Path path;
+            if (smooth) {
+                path = getSmootedLinePath(valuePoints);
+            } else {
+                path = getLinePath(valuePoints);
+            }
+            mRenderPaint.setColor(firstColor);
+            float lineHeight = Utils.convertDpToPixel(15);
+            mRenderPaint.setPathEffect(new DashPathEffect(new float[]{lineHeight, lineHeight}, 0));
+            mDrawCanvas.drawPath(path, mRenderPaint);
+
+            mRenderPaint.setColor(secondColor);
+            mRenderPaint.setPathEffect(new DashPathEffect(new float[]{lineHeight, lineHeight}, lineHeight));
+            mDrawCanvas.drawPath(path, mRenderPaint);
+
+            mRenderPaint.setPathEffect(null);
+            mRenderPaint.setStyle(prevStyle);
         }
-        mRenderPaint.setColor(firstColor);
-        float lineHeight = Utils.convertDpToPixel(15);
-        mRenderPaint.setPathEffect(new DashPathEffect(new float[]{lineHeight, lineHeight}, 0));
-        mDrawCanvas.drawPath(path, mRenderPaint);
-
-        mRenderPaint.setColor(secondColor);
-        mRenderPaint.setPathEffect(new DashPathEffect(new float[]{lineHeight, lineHeight}, lineHeight));
-        mDrawCanvas.drawPath(path, mRenderPaint);
-
-        mRenderPaint.setPathEffect(null);
-        mRenderPaint.setStyle(prevStyle);
     }
 
     private Path getSmootedLinePath(float[] valuePoints) {
