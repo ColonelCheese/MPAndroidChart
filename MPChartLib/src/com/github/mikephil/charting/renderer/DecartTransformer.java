@@ -8,6 +8,7 @@ import android.view.View;
 
 import com.github.mikephil.charting.data.DecartEntry;
 import com.github.mikephil.charting.interfaces.ChartInterface;
+import com.github.mikephil.charting.interfaces.DecartChartInterface;
 import com.github.mikephil.charting.utils.Utils;
 
 import java.util.ArrayList;
@@ -69,6 +70,19 @@ public class DecartTransformer {
         // setup all matrices
         mMatrixValueToPx.reset();
         mMatrixValueToPx.postTranslate(0, -chart.getYChartMin());
+        mMatrixValueToPx.postScale(scaleX, -scaleY);
+    }
+
+    public void prepareMatrixValuePx(DecartChartInterface chart) {
+
+        float scaleX = (float) ((chart.getWidth() - chart.getOffsetRight() - chart
+                .getOffsetLeft()) / chart.getDeltaX());
+        float scaleY = (float) ((chart.getHeight() - chart.getOffsetTop() - chart
+                .getOffsetBottom()) / chart.getDeltaY());
+
+        // setup all matrices
+        mMatrixValueToPx.reset();
+        mMatrixValueToPx.postTranslate(-chart.getXChartMin(), -chart.getYChartMin());
         mMatrixValueToPx.postScale(scaleX, -scaleY);
     }
 

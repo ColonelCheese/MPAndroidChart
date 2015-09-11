@@ -30,6 +30,7 @@ import com.github.mikephil.charting.data.DecartData;
 import com.github.mikephil.charting.data.DecartDataSet;
 import com.github.mikephil.charting.data.DecartEntry;
 import com.github.mikephil.charting.interfaces.ChartInterface;
+import com.github.mikephil.charting.interfaces.DecartChartInterface;
 import com.github.mikephil.charting.interfaces.OnChartGestureListener;
 import com.github.mikephil.charting.interfaces.OnDecartGraphValueSelectedListener;
 import com.github.mikephil.charting.interfaces.OnDrawListener;
@@ -68,7 +69,7 @@ import java.util.List;
 @SuppressLint("RtlHardcoded")
 public abstract class DecartGraphBase<T extends DecartData> extends
         ViewGroup
-        implements ValueAnimator.AnimatorUpdateListener, ChartInterface {
+        implements ValueAnimator.AnimatorUpdateListener, DecartChartInterface {
     public static final String LOG_TAG = "MPChart";
 
     /**
@@ -3070,7 +3071,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
     }
 
     protected boolean isOffContentRect(RectF rectF) {
-        return !mContentRect.contains(rectF);
+        return mContentRect.contains(rectF);
     }
 
     /**
