@@ -3071,7 +3071,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
     }
 
     protected boolean isOffContentRect(RectF rectF) {
-        return mContentRect.contains(rectF);
+        return !mContentRect.contains(rectF);
     }
 
     /**
