@@ -15,10 +15,16 @@ public interface OnDecartGraphValueSelectedListener {
      *
      * @param e            The selected Entry.
      */
-    public void onValueSelected(DecartEntry e);
+    void onValueSelected(DecartEntry e);
+    /**
+     * Called when a value has been long taped inside the chart.
+     *
+     * @param e            The selected Entry.
+     */
+    void onValueLongPress(DecartEntry e);
 
     /**
      * Called when nothing has been selected or an "un-select" has been made.
      */
-    public void onNothingSelected();
+    void onNothingSelected();
 }

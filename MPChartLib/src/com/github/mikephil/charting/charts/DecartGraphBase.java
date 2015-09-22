@@ -1253,6 +1253,32 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         }
     }
 
+    public void highlightLongTap(DecartHighlight highlight) {
+        if (highlight == null)
+            mIndicesToHightlight = null;
+        else {
+
+            // set the indices to highlight
+            mIndicesToHightlight = new DecartHighlight[]{
+                    highlight
+            };
+        }
+
+        // redraw the chart
+        invalidate();
+
+        if (mSelectionListener != null) {
+
+            if (!valuesToHighlight())
+                mSelectionListener.onNothingSelected();
+            else {
+
+                // notify the listener
+                mSelectionListener.onValueLongPress(highlight.getDecartEntry());
+            }
+        }
+    }
+
     /**
      * ################ ################ ################ ################
      */

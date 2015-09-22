@@ -421,6 +421,9 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
             Log.i("BarlineChartTouch",
                     "Longpress, resetting zoom and drag, adjusting chart bounds to screen.");
         }
+
+        DecartHighlight h = mChart.getHighlightByTouchPoint(e.getX(), e.getY());
+        mChart.highlightLongTap(h);
     }
 
     @Override
