@@ -58,6 +58,8 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
      */
     private int mTouchMode = NONE;
 
+    private boolean mDisableLongClick = false;
+
     private float mSavedXDist = 1f;
     private float mSavedYDist = 1f;
     private float mSavedDist = 1f;
@@ -88,7 +90,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
     @Override
     public boolean onTouch(View v, MotionEvent event) {
 
-        if (mTouchMode == NONE) {
+        if (mTouchMode == NONE && event.getAction() != MotionEvent.ACTION_MOVE) {
             mGestureDetector.onTouchEvent(event);
         }
 
@@ -99,7 +101,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
 
             case MotionEvent.ACTION_DOWN:
-
+                mDisableLongClick = false;
                 saveTouchStart(event);
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
@@ -120,7 +122,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
                     mSavedDist = spacing(event);
 
                     if (mSavedDist > 10f) {
-                        if (mSavedXDist > 40f && mSavedYDist > 40f ){
+                        if (mSavedXDist > 40f && mSavedYDist > 40f) {
                             if (mChart.isPinchZoomEnabled()) {
                                 mTouchMode = PINCH_ZOOM;
                             }
@@ -136,7 +138,6 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-
                 if (mTouchMode == DRAG) {
 
                     mChart.disableScroll();
@@ -154,7 +155,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
                 } else if (mTouchMode == NONE
                         && Math.abs(distance(event.getX(), mTouchStartPoint.x, event.getY(),
                         mTouchStartPoint.y)) > 25f) {
-
+                    mDisableLongClick = true;
                     if (mChart.hasNoDragOffset()) {
 
                         if (!mChart.isFullyZoomedOut())
@@ -408,22 +409,23 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
 
     @Override
     public void onLongPress(MotionEvent e) {
+        if (mTouchMode == NONE && !mDisableLongClick) {
+            OnChartGestureListener l = mChart.getOnChartGestureListener();
 
-        OnChartGestureListener l = mChart.getOnChartGestureListener();
+            if (l != null) {
 
-        if (l != null) {
+                l.onChartLongPressed(e);
+            } else if (mTouchMode == NONE) {
 
-            l.onChartLongPressed(e);
-        } else if (mTouchMode == NONE) {
+                //mChart.fitScreen();
 
-            //mChart.fitScreen();
+                Log.i("BarlineChartTouch",
+                        "Longpress, resetting zoom and drag, adjusting chart bounds to screen.");
+            }
 
-            Log.i("BarlineChartTouch",
-                    "Longpress, resetting zoom and drag, adjusting chart bounds to screen.");
+            DecartHighlight h = mChart.getHighlightByTouchPoint(e.getX(), e.getY());
+            mChart.highlightLongTap(h);
         }
-
-        DecartHighlight h = mChart.getHighlightByTouchPoint(e.getX(), e.getY());
-        mChart.highlightLongTap(h);
     }
 
     @Override
