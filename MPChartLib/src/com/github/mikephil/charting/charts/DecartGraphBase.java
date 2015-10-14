@@ -29,7 +29,6 @@ import android.view.ViewParent;
 import com.github.mikephil.charting.data.DecartData;
 import com.github.mikephil.charting.data.DecartDataSet;
 import com.github.mikephil.charting.data.DecartEntry;
-import com.github.mikephil.charting.interfaces.ChartInterface;
 import com.github.mikephil.charting.interfaces.DecartChartInterface;
 import com.github.mikephil.charting.interfaces.OnChartGestureListener;
 import com.github.mikephil.charting.interfaces.OnDecartGraphValueSelectedListener;
@@ -2834,11 +2833,17 @@ public abstract class DecartGraphBase<T extends DecartData> extends
                     }
                 }
 
-                mDrawCanvas.drawText(label, position[0],
-                        yPos,
-                        mXLabelPaint);
+                if(needToDrawXValue(label)) {
+                    mDrawCanvas.drawText(label, position[0],
+                            yPos,
+                            mXLabelPaint);
+                }
             }
         }
+    }
+
+    protected boolean needToDrawXValue(String label) {
+        return true;
     }
 
     /**
