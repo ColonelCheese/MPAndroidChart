@@ -74,6 +74,11 @@ public class DecartDataSet<T extends DecartEntry> {
     private float mShapeSize = 12f;
 
     /**
+     * the alpha of color the scattershape will have, from 0 to 255
+     */
+    private int mShapeAlpha = 255;
+
+    /**
      * the type of shape that is set to be drawn where the values are at,
      * default ScatterShape.SQUARE
      */
@@ -95,7 +100,7 @@ public class DecartDataSet<T extends DecartEntry> {
      * label that describes the DataSet can be specified. The label can also be
      * used to retrieve the DataSet from a ChartData object.
      *
-     * @param yVals
+     * @param entries
      * @param label
      */
     public DecartDataSet(ArrayList<T> entries, String label) {
@@ -285,7 +290,7 @@ public class DecartDataSet<T extends DecartEntry> {
      * Adds an Entry to the DataSet dynamically. This will also recalculate the
      * current minimum and maximum values of the DataSet and the value-sum.
      *
-     * @param d
+     * @param e
      */
     public void addEntry(DecartEntry e) {
 
@@ -497,6 +502,24 @@ public class DecartDataSet<T extends DecartEntry> {
      */
     public float getScatterShapeSize() {
         return mShapeSize;
+    }
+
+    /**
+     * Sets the alpha in from 0 to 255 the drawn scattershape will have.
+     *
+     * @param alpha
+     */
+    public void setScatterShapeAlpha(int alpha) {
+        mShapeAlpha = alpha;
+    }
+
+    /**
+     * returns the currently set scatter alpha
+     *
+     * @return
+     */
+    public int getScatterShapeAlpha() {
+        return mShapeAlpha;
     }
 
     /**

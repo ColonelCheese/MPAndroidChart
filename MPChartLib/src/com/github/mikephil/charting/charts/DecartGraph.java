@@ -1,6 +1,7 @@
 package com.github.mikephil.charting.charts;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
@@ -101,60 +102,21 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                     getPaintColor(dataSet, j / 2);
                     float sizeMultiplier = getSizeMultiplyer(dataSet, j / 2);
 
+                    int initialRenderAlpha = mRenderPaint.getAlpha();
+                    mRenderPaint.setAlpha(dataSet.getScatterShapeAlpha());
+                    int initialBackgroundAlpha = mGridBackgroundPaint.getAlpha();
+                    mGridBackgroundPaint.setAlpha(dataSet.getScatterShapeAlpha());
+
                     if (shape == GraphShape.SQUARE) {
-                        drawSquare(shapeHalf, valuePoints, j, sizeMultiplier);
+                        drawSquare(shapeHalf, valuePoints, j, sizeMultiplier, false);
                     } else if (shape == GraphShape.STROKE_CIRCLE) {
-                        Paint tmpPaint = new Paint(mRenderPaint);
-                        tmpPaint.setStyle(Paint.Style.STROKE);
-                        tmpPaint.setStrokeWidth(3f);
-                        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier * backgroundInkingMultiplier,
-                                tmpPaint);
-                        tmpPaint.setStyle(Paint.Style.FILL);
-                        tmpPaint.setColor(Color.WHITE);
-                        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier * backgroundInkingMultiplier,
-                                tmpPaint);
+                        drawStrokeCircle(shapeHalf, valuePoints, j, sizeMultiplier);
                     } else if (shape == GraphShape.CIRCLE) {
-                        //draw inking
-                        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier * backgroundInkingMultiplier,
-                                mGridBackgroundPaint);
-                        //draw shape
-                        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier,
-                                mRenderPaint);
-
+                        drawCircle(shapeHalf, valuePoints, j, sizeMultiplier, false);
                     } else if (shape == GraphShape.CROSS) {
-
-                        mDrawCanvas.drawLine((valuePoints[j] - shapeHalf) * sizeMultiplier,
-                                (valuePoints[j + 1]) * sizeMultiplier,
-                                (valuePoints[j] + shapeHalf) * sizeMultiplier,
-                                (valuePoints[j + 1]) * sizeMultiplier,
-                                mRenderPaint);
-
-                        mDrawCanvas.drawLine(valuePoints[j] * sizeMultiplier,
-                                (valuePoints[j + 1] - shapeHalf) * sizeMultiplier,
-                                valuePoints[j] * sizeMultiplier,
-                                (valuePoints[j + 1] + shapeHalf) * sizeMultiplier,
-                                mRenderPaint);
-
+                        drawCross(shapeHalf, valuePoints, j, sizeMultiplier);
                     } else if (shape == GraphShape.TRIANGLE) {
-                        //draw inking
-                        float shapeHalfMI = shapeHalf * sizeMultiplier * backgroundInkingMultiplier;
-                        Path triI = new Path();
-                        triI.moveTo(valuePoints[j], valuePoints[j + 1] - shapeHalfMI);
-                        triI.lineTo(valuePoints[j] + shapeHalfMI, valuePoints[j + 1] + shapeHalfMI);
-                        triI.lineTo(valuePoints[j] - shapeHalfMI, valuePoints[j + 1] + shapeHalfMI);
-                        triI.close();
-
-                        mDrawCanvas.drawPath(triI, mGridBackgroundPaint);
-                        //draw shape
-                        float shapeHalfM = shapeHalf * sizeMultiplier;
-                        Path tri = new Path();
-                        tri.moveTo(valuePoints[j], valuePoints[j + 1] - shapeHalfM);
-                        tri.lineTo(valuePoints[j] + shapeHalfM, valuePoints[j + 1] + shapeHalfM);
-                        tri.lineTo(valuePoints[j] - shapeHalfM, valuePoints[j + 1] + shapeHalfM);
-                        tri.close();
-
-                        mDrawCanvas.drawPath(tri, mRenderPaint);
-
+                        drawTriange(shapeHalf, valuePoints, j, sizeMultiplier, false);
                     } else if (shape == GraphShape.CUSTOM) {
 
                         Path customShape = dataSet.getCustomScatterShape();
@@ -166,9 +128,95 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                         mTrans.pathValueToPixel(customShape);
                         mDrawCanvas.drawPath(customShape, mRenderPaint);
                     }
+                    Bitmap customShapeBitmap = getCustomShapeBitmap(dataSet, j / 2);
+                    if (customShapeBitmap != null) {
+                        drawCustomShapeBitmap(customShapeBitmap, valuePoints, j, shapeHalf, sizeMultiplier);
+                    }
+                    mRenderPaint.setAlpha(initialRenderAlpha);
+                    mGridBackgroundPaint.setAlpha(initialBackgroundAlpha);
                 }
             }
         }
+    }
+
+    private void drawTriange(float shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
+        if (drawInking) {
+            //draw inking
+            float shapeHalfMI = shapeHalf * sizeMultiplier * backgroundInkingMultiplier;
+            Path triI = new Path();
+            triI.moveTo(valuePoints[j], valuePoints[j + 1] - shapeHalfMI);
+            triI.lineTo(valuePoints[j] + shapeHalfMI, valuePoints[j + 1] + shapeHalfMI);
+            triI.lineTo(valuePoints[j] - shapeHalfMI, valuePoints[j + 1] + shapeHalfMI);
+            triI.close();
+            mDrawCanvas.drawPath(triI, mGridBackgroundPaint);
+        }
+
+        //draw shape
+        float shapeHalfM = shapeHalf * sizeMultiplier;
+        Path tri = new Path();
+        tri.moveTo(valuePoints[j], valuePoints[j + 1] - shapeHalfM);
+        tri.lineTo(valuePoints[j] + shapeHalfM, valuePoints[j + 1] + shapeHalfM);
+        tri.lineTo(valuePoints[j] - shapeHalfM, valuePoints[j + 1] + shapeHalfM);
+        tri.close();
+
+        mDrawCanvas.drawPath(tri, mRenderPaint);
+    }
+
+    private void drawCross(float shapeHalf, float[] valuePoints, int j, float sizeMultiplier) {
+        mDrawCanvas.drawLine((valuePoints[j] - shapeHalf) * sizeMultiplier,
+                (valuePoints[j + 1]) * sizeMultiplier,
+                (valuePoints[j] + shapeHalf) * sizeMultiplier,
+                (valuePoints[j + 1]) * sizeMultiplier,
+                mRenderPaint);
+
+        mDrawCanvas.drawLine(valuePoints[j] * sizeMultiplier,
+                (valuePoints[j + 1] - shapeHalf) * sizeMultiplier,
+                valuePoints[j] * sizeMultiplier,
+                (valuePoints[j + 1] + shapeHalf) * sizeMultiplier,
+                mRenderPaint);
+    }
+
+    private void drawCircle(float shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
+        if (drawInking) {
+            //draw inking
+            mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier * backgroundInkingMultiplier,
+                    mGridBackgroundPaint);
+        }
+        //draw shape
+        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier,
+                mRenderPaint);
+    }
+
+    private void drawStrokeCircle(float shapeHalf, float[] valuePoints, int j, float sizeMultiplier) {
+        //FIXME: paint must not be init when draw
+        Paint tmpPaint = new Paint(mRenderPaint);
+        tmpPaint.setStyle(Paint.Style.STROKE);
+        tmpPaint.setStrokeWidth(3f);
+        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier * backgroundInkingMultiplier,
+                tmpPaint);
+
+        tmpPaint.setStyle(Paint.Style.FILL);
+        tmpPaint.setColor(Color.WHITE);
+        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier * backgroundInkingMultiplier,
+                tmpPaint);
+    }
+
+
+    private void drawSquare(float shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
+        if (drawInking) {
+            //draw inking
+            float shapeHalfMI = shapeHalf * sizeMultiplier * backgroundInkingMultiplier;
+            mDrawCanvas.drawRect((valuePoints[j] - shapeHalfMI),
+                    (valuePoints[j + 1] - shapeHalfMI),
+                    (valuePoints[j] + shapeHalfMI),
+                    (valuePoints[j + 1] + shapeHalfMI), mGridBackgroundPaint);
+        }
+        //draw shape
+        float shapeHalfM = shapeHalf * sizeMultiplier;
+        mDrawCanvas.drawRect((valuePoints[j] - shapeHalfM),
+                (valuePoints[j + 1] - shapeHalfM),
+                (valuePoints[j] + shapeHalfM),
+                (valuePoints[j + 1] + shapeHalfM), mRenderPaint);
     }
 
     private void drawLine(float[] valuePoints, boolean smooth) {
@@ -184,6 +232,15 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
             mDrawCanvas.drawPath(path, mRenderPaint);
             mRenderPaint.setStyle(prevStyle);
         }
+    }
+
+
+    private void drawCustomShapeBitmap(Bitmap bitmap, float[] valuePoints, int j, float shapeHalf, float sizeMultiplier) {
+        float sideHalfSize = shapeHalf * sizeMultiplier * 0.5f;
+        RectF dstRect = new RectF(valuePoints[j] - sideHalfSize, valuePoints[j + 1] - sideHalfSize, valuePoints[j] + sideHalfSize, valuePoints[j + 1] + sideHalfSize);
+        mDrawCanvas.drawBitmap(bitmap, null,
+                dstRect,
+                mRenderPaint);
     }
 
     private Path getLinePath(float[] valuePoints) {
@@ -260,21 +317,6 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         return path;
     }
 
-    private void drawSquare(float shapeHalf, float[] valuePoints, int j, float sizeMultiplier) {
-        //draw inking
-        float shapeHalfMI = shapeHalf * sizeMultiplier * backgroundInkingMultiplier;
-        mDrawCanvas.drawRect((valuePoints[j] - shapeHalfMI),
-                (valuePoints[j + 1] - shapeHalfMI),
-                (valuePoints[j] + shapeHalfMI),
-                (valuePoints[j + 1] + shapeHalfMI), mGridBackgroundPaint);
-        //draw shape
-        float shapeHalfM = shapeHalf * sizeMultiplier;
-        mDrawCanvas.drawRect((valuePoints[j] - shapeHalfM),
-                (valuePoints[j + 1] - shapeHalfM),
-                (valuePoints[j] + shapeHalfM),
-                (valuePoints[j + 1] + shapeHalfM), mRenderPaint);
-    }
-
     public float getSizeMultiplyer(DecartDataSet dataSet, int j) {
         return 1f;
     }
@@ -286,6 +328,10 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
     public String getShapeLabel(DecartDataSet dataSet, int j) {
         float val = ((DecartEntry) dataSet.getEntries().get(j)).getYVal();
         return mValueFormatter.getFormattedValue(val);
+    }
+
+    protected Bitmap getCustomShapeBitmap(DecartDataSet dataSet, int j) {
+        return null;
     }
 
     @Override
