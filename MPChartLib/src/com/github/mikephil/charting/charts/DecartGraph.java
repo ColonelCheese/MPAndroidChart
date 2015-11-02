@@ -189,17 +189,21 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
     }
 
     private void drawStrokeCircle(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier) {
-        //FIXME: paint must not be init when draw
-        Paint tmpPaint = new Paint(mRenderPaint);
-        tmpPaint.setStyle(Paint.Style.STROKE);
-        tmpPaint.setStrokeWidth(3f);
+        int initialColor = mRenderPaint.getColor();
+        Paint.Style initialStyle = mRenderPaint.getStyle();
+        float initialStrokeWidth = mRenderPaint.getStrokeWidth();
+        mRenderPaint.setStyle(Paint.Style.STROKE);
+        mRenderPaint.setStrokeWidth(3f);
         mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier,
-                tmpPaint);
+                mRenderPaint);
 
-        tmpPaint.setStyle(Paint.Style.FILL);
-        tmpPaint.setColor(Color.WHITE);
+        mRenderPaint.setStyle(Paint.Style.FILL);
+        mRenderPaint.setColor(Color.WHITE);
         mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier,
-                tmpPaint);
+                mRenderPaint);
+        mRenderPaint.setColor(initialColor);
+        mRenderPaint.setStyle(initialStyle);
+        mRenderPaint.setStrokeWidth(initialStrokeWidth);
     }
 
 
