@@ -6,7 +6,6 @@ import android.graphics.Path;
 
 import com.github.mikephil.charting.charts.DecartGraph;
 import com.github.mikephil.charting.utils.ColorTemplate;
-import com.github.mikephil.charting.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +70,7 @@ public class DecartDataSet<T extends DecartEntry> {
     /**
      * the size the scattershape will have, in screen pixels
      */
-    private float mShapeSize = 12f;
+    private int mShapeSize = 12;
 
     /**
      * the alpha of color the scattershape will have, from 0 to 255
@@ -486,13 +485,13 @@ public class DecartDataSet<T extends DecartEntry> {
     }
 
     /**
-     * Sets the size in density pixels the drawn scattershape will have. This
+     * Sets the size in pixels. This
      * only applies for non custom shapes.
      *
      * @param size
      */
-    public void setScatterShapeSize(float size) {
-        mShapeSize = Utils.convertDpToPixel(size);
+    public void setScatterShapeSize(int size) {
+        mShapeSize = size;
     }
 
     /**
@@ -500,7 +499,7 @@ public class DecartDataSet<T extends DecartEntry> {
      *
      * @return
      */
-    public float getScatterShapeSize() {
+    public int getScatterShapeSize() {
         return mShapeSize;
     }
 

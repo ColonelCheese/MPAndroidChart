@@ -68,7 +68,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
             DecartDataSet dataSet = dataSets.get(i);
             ArrayList<DecartEntry> entries = dataSet.getEntries();
 
-            float shapeHalf = dataSet.getScatterShapeSize() / 2f;
+            int shapeHalf = dataSet.getScatterShapeSize() / 2;
 
             float[] valuePoints = mTrans.generateTransformedValuesDecart(entries, mPhaseY);
 
@@ -139,7 +139,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         }
     }
 
-    private void drawTriange(float shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
+    private void drawTriange(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
         if (drawInking) {
             //draw inking
             float shapeHalfMI = shapeHalf * sizeMultiplier * backgroundInkingMultiplier;
@@ -162,7 +162,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         mDrawCanvas.drawPath(tri, mRenderPaint);
     }
 
-    private void drawCross(float shapeHalf, float[] valuePoints, int j, float sizeMultiplier) {
+    private void drawCross(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier) {
         mDrawCanvas.drawLine((valuePoints[j] - shapeHalf) * sizeMultiplier,
                 (valuePoints[j + 1]) * sizeMultiplier,
                 (valuePoints[j] + shapeHalf) * sizeMultiplier,
@@ -176,7 +176,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                 mRenderPaint);
     }
 
-    private void drawCircle(float shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
+    private void drawCircle(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
         if (drawInking) {
             //draw inking
             mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier * backgroundInkingMultiplier,
@@ -187,22 +187,22 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                 mRenderPaint);
     }
 
-    private void drawStrokeCircle(float shapeHalf, float[] valuePoints, int j, float sizeMultiplier) {
+    private void drawStrokeCircle(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier) {
         //FIXME: paint must not be init when draw
         Paint tmpPaint = new Paint(mRenderPaint);
         tmpPaint.setStyle(Paint.Style.STROKE);
         tmpPaint.setStrokeWidth(3f);
-        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier * backgroundInkingMultiplier,
+        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier,
                 tmpPaint);
 
         tmpPaint.setStyle(Paint.Style.FILL);
         tmpPaint.setColor(Color.WHITE);
-        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier * backgroundInkingMultiplier,
+        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier,
                 tmpPaint);
     }
 
 
-    private void drawSquare(float shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
+    private void drawSquare(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
         if (drawInking) {
             //draw inking
             float shapeHalfMI = shapeHalf * sizeMultiplier * backgroundInkingMultiplier;
@@ -234,8 +234,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         }
     }
 
-
-    private void drawCustomShapeBitmap(Bitmap bitmap, float[] valuePoints, int j, float shapeHalf, float sizeMultiplier) {
+    private void drawCustomShapeBitmap(Bitmap bitmap, float[] valuePoints, int j, int shapeHalf, float sizeMultiplier) {
         float sideHalfSize = shapeHalf * sizeMultiplier * 0.5f;
         RectF dstRect = new RectF(valuePoints[j] - sideHalfSize, valuePoints[j + 1] - sideHalfSize, valuePoints[j] + sideHalfSize, valuePoints[j + 1] + sideHalfSize);
         mDrawCanvas.drawBitmap(bitmap, null,
