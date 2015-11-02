@@ -130,7 +130,8 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                     }
                     Bitmap customShapeBitmap = getCustomShapeBitmap(dataSet, j / 2);
                     if (customShapeBitmap != null) {
-                        drawCustomShapeBitmap(customShapeBitmap, valuePoints, j, shapeHalf, sizeMultiplier);
+                        boolean drawOnTheBottom = shape == GraphShape.TRIANGLE;
+                        drawCustomShapeBitmap(customShapeBitmap, valuePoints, j, shapeHalf, sizeMultiplier, drawOnTheBottom);
                     }
                     mRenderPaint.setAlpha(initialRenderAlpha);
                     mGridBackgroundPaint.setAlpha(initialBackgroundAlpha);
@@ -234,9 +235,17 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         }
     }
 
-    private void drawCustomShapeBitmap(Bitmap bitmap, float[] valuePoints, int j, int shapeHalf, float sizeMultiplier) {
-        float sideHalfSize = shapeHalf * sizeMultiplier * 0.5f;
-        RectF dstRect = new RectF(valuePoints[j] - sideHalfSize, valuePoints[j + 1] - sideHalfSize, valuePoints[j] + sideHalfSize, valuePoints[j + 1] + sideHalfSize);
+    private void drawCustomShapeBitmap(Bitmap bitmap, float[] valuePoints, int j, int shapeHalf, float sizeMultiplier, boolean drawOnTheBottom) {
+        float sideHalfSize = shapeHalf * sizeMultiplier * 0.75f;
+        float left = valuePoints[j] - sideHalfSize;
+        float top = valuePoints[j + 1] - sideHalfSize;
+        float right = valuePoints[j] + sideHalfSize;
+        float bottom = valuePoints[j + 1] + sideHalfSize;
+        if (drawOnTheBottom) {
+            top += sideHalfSize / 2;
+            bottom += sideHalfSize / 2;
+        }
+        RectF dstRect = new RectF(left, top, right, bottom);
         mDrawCanvas.drawBitmap(bitmap, null,
                 dstRect,
                 mRenderPaint);
