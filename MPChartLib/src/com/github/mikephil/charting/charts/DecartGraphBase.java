@@ -487,8 +487,6 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         mLegendLabelPaint.setTextSize(Utils.convertDpToPixel(9f));
 
         mHighlightPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mHighlightPaint.setStyle(Paint.Style.STROKE);
-        mHighlightPaint.setStrokeWidth(2f);
         mHighlightPaint.setColor(Color.rgb(255, 187, 115));
 
         mXLabelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -542,6 +540,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         mOffsetsCalculated = false;
         mData = data;
         mData = data;
+        mIndicesToHightlight = null;
 
         prepare();
 
@@ -751,13 +750,13 @@ public abstract class DecartGraphBase<T extends DecartData> extends
 
         drawVerticalGrid();
 
-        drawData();
-
-        drawLimitLines();
-
         // if highlighting is enabled
         if (mHighlightEnabled && mHighLightIndicatorEnabled && valuesToHighlight())
             drawHighlights();
+
+        drawData();
+
+        drawLimitLines();
 
         // Removes clipping rectangle
         mDrawCanvas.restoreToCount(clipRestoreCount);
@@ -2833,7 +2832,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
                     }
                 }
 
-                if(needToDrawXValue(label)) {
+                if (needToDrawXValue(label)) {
                     mDrawCanvas.drawText(label, position[0],
                             yPos,
                             mXLabelPaint);
@@ -3189,9 +3188,9 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * refresh method
      */
 
-    public Matrix refresh(Matrix save){
+    public Matrix refresh(Matrix save) {
         Matrix result = mTrans.refresh(save, this);
-        if (mOnZoomChangedListener != null){
+        if (mOnZoomChangedListener != null) {
             mOnZoomChangedListener.onZoomChanged(this);
         }
         return result;
@@ -3695,14 +3694,14 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         if (xTouchVal < -mTouchOffset || xTouchVal > mDeltaX + mTouchOffset)
             return null;
 
-        ArrayList<Pair<Integer, DecartEntry>> valsAtIndex = getYValsNearXValue((float) xTouchVal, (float) yTouchVal, mTouchOffset);
+        ArrayList<DecartHighlight> valsAtIndex = getYValsNearXValue((float) xTouchVal, (float) yTouchVal, mTouchOffset);
 
-        Pair<Integer, DecartEntry> selectedEntry = Utils.getClosestDataSetIndex(valsAtIndex, (float) xTouchVal, (float) yTouchVal);
+        DecartHighlight selectedEntry = Utils.getClosestDataSetIndex(valsAtIndex, (float) xTouchVal, (float) yTouchVal);
 
         if (selectedEntry == null)
             return null;
 
-        return new DecartHighlight(selectedEntry.second, selectedEntry.first);
+        return selectedEntry;
     }
 
     /**
@@ -3712,17 +3711,18 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * @param round
      * @return
      */
-    public ArrayList<Pair<Integer, DecartEntry>> getYValsNearXValue(float xValue, float yValue, float round) {
+    public ArrayList<DecartHighlight> getYValsNearXValue(float xValue, float yValue, float round) {
 
-        ArrayList<Pair<Integer, DecartEntry>> vals = new ArrayList<Pair<Integer, DecartEntry>>();
+        ArrayList<DecartHighlight> vals = new ArrayList<>();
 
         for (int i = 0; i < mData.getDataSetCount(); i++) {
 
             // extract all y-values from all DataSets at the given x-index
             List<DecartEntry> decartEntries = mData.getDataSetByIndex(i).getEntriesInRange(xValue, yValue, round, 0);
 
-            for (DecartEntry decartEntry : decartEntries) {
-                vals.add(new Pair(i, decartEntry));
+            for (int j = 0; j < decartEntries.size(); j++) {
+                DecartEntry decartEntry = decartEntries.get(j);
+                vals.add(new DecartHighlight(decartEntry, i, mData.getDataSetByIndex(i).getEntries().indexOf(decartEntry)));
             }
         }
 

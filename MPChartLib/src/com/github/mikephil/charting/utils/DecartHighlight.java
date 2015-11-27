@@ -16,16 +16,18 @@ public class DecartHighlight {
 
     private int mDataSetIndex;
 
+    private int mEntryIndex;
+
     /**
      * constructor
      *
      * @param entryIndex   the index of the highlighted entry in dataset
-     * @param val          the value at the position the user touched
      * @param dataSetIndex the index of the DataSet the highlighted value belongs to
      */
-    public DecartHighlight(DecartEntry decartEntry, int dataSetIndex) {
+    public DecartHighlight(DecartEntry decartEntry, int dataSetIndex, int entryIndex) {
         this.mDecartEntry = decartEntry;
         this.mDataSetIndex = dataSetIndex;
+        this.mEntryIndex = entryIndex;
     }
 
     public DecartEntry getDecartEntry() {
@@ -34,6 +36,14 @@ public class DecartHighlight {
 
     public int getDataSetIndex() {
         return mDataSetIndex;
+    }
+
+    public int getmEntryIndex() {
+        return mEntryIndex;
+    }
+
+    public void setmEntryIndex(int mEntryIndex) {
+        this.mEntryIndex = mEntryIndex;
     }
 
     /**

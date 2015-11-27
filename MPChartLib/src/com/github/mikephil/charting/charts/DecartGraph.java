@@ -12,6 +12,7 @@ import android.util.AttributeSet;
 import com.github.mikephil.charting.data.DecartData;
 import com.github.mikephil.charting.data.DecartDataSet;
 import com.github.mikephil.charting.data.DecartEntry;
+import com.github.mikephil.charting.utils.DecartHighlight;
 import com.github.mikephil.charting.utils.Utils;
 
 import java.util.ArrayList;
@@ -28,6 +29,10 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
     private float backgroundInkingMultiplier = 1.2f;
 
     private List<RectF> filledRects = new LinkedList<>();
+
+    private static final float highlightRadius = Utils.convertDpToPixel(36);
+    private static final float highlightWhiteRadius = Utils.convertDpToPixel(18);
+    private static final int highlightAlpha = 60;
 
     /**
      * enum that defines the shape that is drawn where the values are
@@ -116,7 +121,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                     } else if (shape == GraphShape.CROSS) {
                         drawCross(shapeHalf, valuePoints, j, sizeMultiplier);
                     } else if (shape == GraphShape.TRIANGLE) {
-                        drawTriange(shapeHalf, valuePoints, j, sizeMultiplier, false);
+                        drawTrianlge(shapeHalf, valuePoints, j, sizeMultiplier, false);
                     } else if (shape == GraphShape.CUSTOM) {
 
                         Path customShape = dataSet.getCustomScatterShape();
@@ -130,8 +135,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                     }
                     Bitmap customShapeBitmap = getCustomShapeBitmap(dataSet, j / 2);
                     if (customShapeBitmap != null) {
-                        boolean drawOnTheBottom = shape == GraphShape.TRIANGLE;
-                        drawCustomShapeBitmap(customShapeBitmap, valuePoints, j, shapeHalf, sizeMultiplier, drawOnTheBottom);
+                        drawCustomShapeBitmap(customShapeBitmap, valuePoints, j, shapeHalf, sizeMultiplier);
                     }
                     mRenderPaint.setAlpha(initialRenderAlpha);
                     mGridBackgroundPaint.setAlpha(initialBackgroundAlpha);
@@ -140,25 +144,24 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         }
     }
 
-    private void drawTriange(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
+    private void drawTrianlge(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
         if (drawInking) {
             //draw inking
             float shapeHalfMI = shapeHalf * sizeMultiplier * backgroundInkingMultiplier;
-            Path triI = new Path();
-            triI.moveTo(valuePoints[j], valuePoints[j + 1] - shapeHalfMI);
-            triI.lineTo(valuePoints[j] + shapeHalfMI, valuePoints[j + 1] + shapeHalfMI);
-            triI.lineTo(valuePoints[j] - shapeHalfMI, valuePoints[j + 1] + shapeHalfMI);
-            triI.close();
-            mDrawCanvas.drawPath(triI, mGridBackgroundPaint);
+            drawSimpleTriangle(valuePoints[j], valuePoints[j + 1], shapeHalfMI, mGridBackgroundPaint);
         }
 
         //draw shape
         float shapeHalfM = shapeHalf * sizeMultiplier;
+        drawSimpleTriangle(valuePoints[j], valuePoints[j + 1], shapeHalfM, mRenderPaint);
+    }
+
+    private void drawSimpleTriangle(float x, float y, float rad, Paint mRenderPaint) {
         Path tri = new Path();
-        tri.moveTo(valuePoints[j], valuePoints[j + 1] - shapeHalfM);
-        tri.lineTo(valuePoints[j] + shapeHalfM, valuePoints[j + 1] + shapeHalfM);
-        tri.lineTo(valuePoints[j] - shapeHalfM, valuePoints[j + 1] + shapeHalfM);
-        tri.close();
+        tri.moveTo(x - 0.866f * rad, y + 0.5f * rad);//   /
+        tri.lineTo(x, y - rad);//       /
+        tri.lineTo(x + 0.866f * rad, y + 0.5f * rad);//    \
+        tri.close();//                _
 
         mDrawCanvas.drawPath(tri, mRenderPaint);
     }
@@ -239,16 +242,12 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         }
     }
 
-    private void drawCustomShapeBitmap(Bitmap bitmap, float[] valuePoints, int j, int shapeHalf, float sizeMultiplier, boolean drawOnTheBottom) {
+    private void drawCustomShapeBitmap(Bitmap bitmap, float[] valuePoints, int j, int shapeHalf, float sizeMultiplier) {
         float sideHalfSize = shapeHalf * sizeMultiplier * 0.75f;
         float left = valuePoints[j] - sideHalfSize;
         float top = valuePoints[j + 1] - sideHalfSize;
         float right = valuePoints[j] + sideHalfSize;
         float bottom = valuePoints[j + 1] + sideHalfSize;
-        if (drawOnTheBottom) {
-            top += sideHalfSize / 2;
-            bottom += sideHalfSize / 2;
-        }
         RectF dstRect = new RectF(left, top, right, bottom);
         mDrawCanvas.drawBitmap(bitmap, null,
                 dstRect,
@@ -333,12 +332,12 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         return 1f;
     }
 
-    public void getPaintColor(DecartDataSet dataSet, int j) {
+    public void getPaintColor(DecartDataSet dataSet, int itemIndex) {
         mRenderPaint.setColor(dataSet.getColor());
     }
 
-    public String getShapeLabel(DecartDataSet dataSet, int j) {
-        float val = ((DecartEntry) dataSet.getEntries().get(j)).getYVal();
+    public String getShapeLabel(DecartDataSet dataSet, int itemIndex) {
+        float val = ((DecartEntry) dataSet.getEntries().get(itemIndex)).getYVal();
         return mValueFormatter.getFormattedValue(val);
     }
 
@@ -466,8 +465,6 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
             if (set == null)
                 continue;
 
-            mHighlightPaint.setColor(set.getHighLightColor());
-
             float xVal = mIndicesToHightlight[i].getDecartEntry().getXVal(); // get the
             // x-position
 
@@ -480,7 +477,24 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
             mTrans.pointValuesToPixel(pts);
             // draw the highlight lines
-            mDrawCanvas.drawLines(pts, mHighlightPaint);
+            drawHighlight(mIndicesToHightlight[i], pts);
+        }
+    }
+
+    private void drawHighlight(DecartHighlight decartHighlight, float[] pts) {
+        getPaintColor(mData.getDataSetByIndex(decartHighlight.getDataSetIndex()), decartHighlight.getmEntryIndex());
+        mHighlightPaint.setColor(mRenderPaint.getColor());
+        mHighlightPaint.setAlpha(highlightAlpha);
+        float x = pts[0];
+        float y = pts[5];
+        mDrawCanvas.drawCircle(x, y, highlightRadius, mHighlightPaint);
+
+        mHighlightPaint.setColor(Color.WHITE);
+        GraphShape scatterShape = mData.getDataSetByIndex(decartHighlight.getDataSetIndex()).getScatterShape();
+        if (scatterShape == GraphShape.TRIANGLE) {
+            drawSimpleTriangle(x, y, highlightWhiteRadius, mHighlightPaint);
+        } else {
+            mDrawCanvas.drawCircle(x, y, highlightWhiteRadius, mHighlightPaint);
         }
     }
 

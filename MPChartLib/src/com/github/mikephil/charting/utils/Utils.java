@@ -322,7 +322,6 @@ public abstract class Utils {
     /**
      * Converts the provided String ArrayList to a String array.
      *
-     * @param labels
      * @return
      */
     public static String[] convertStrings(ArrayList<String> strings) {
@@ -385,15 +384,15 @@ public abstract class Utils {
      * @param valsAtIndex all the values at a specific index
      * @return
      */
-    public static Pair<Integer, DecartEntry> getClosestDataSetIndex(ArrayList<Pair<Integer, DecartEntry>> valsAtIndex, float x, float y) {
+    public static DecartHighlight getClosestDataSetIndex(ArrayList<DecartHighlight> valsAtIndex, float x, float y) {
         if (valsAtIndex.size() == 1) {
             return valsAtIndex.get(0);
         }
-        Pair<Integer, DecartEntry> nearest = null;
+        DecartHighlight nearest = null;
         float smallesDist = Float.MAX_VALUE;
 
-        for (Pair<Integer, DecartEntry> element : valsAtIndex) {
-            float dist = element.second.distanceSq(x, y);
+        for (DecartHighlight element : valsAtIndex) {
+            float dist = element.getDecartEntry().distanceSq(x, y);
             if (smallesDist > dist) {
                 nearest = element;
                 smallesDist = dist;
