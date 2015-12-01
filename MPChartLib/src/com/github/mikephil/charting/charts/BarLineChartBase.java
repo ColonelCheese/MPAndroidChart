@@ -206,11 +206,6 @@ public abstract class BarLineChartBase<T extends BarLineScatterCandleData<? exte
         if (mHighlightEnabled && mHighLightIndicatorEnabled && valuesToHighlight())
             drawHighlights();
 
-        // if highlighting is enabled
-        if (mHighlightValuesEnabled && valuesToHighlight()) {
-            drawHighlightsValues();
-        }
-
         // Removes clipping rectangle
         mDrawCanvas.restoreToCount(clipRestoreCount);
 
@@ -229,6 +224,11 @@ public abstract class BarLineChartBase<T extends BarLineScatterCandleData<? exte
         drawMarkers();
 
         drawDescription();
+
+        // if highlighting is enabled
+        if (mHighlightValuesEnabled && valuesToHighlight()) {
+            drawHighlightsValues();
+        }
 
         canvas.drawBitmap(mDrawBitmap, 0, 0, mDrawPaint);
 
