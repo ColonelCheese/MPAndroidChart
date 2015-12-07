@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 
 import com.github.mikephil.charting.data.DecartData;
 import com.github.mikephil.charting.data.DecartDataSet;
@@ -19,13 +20,15 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.xml.transform.dom.DOMLocator;
+
 /**
  * The Decart's orthogonal graph. Draws dots, triangles, squares and custom shapes into the
  * chartview.
  */
 public class DecartGraph extends DecartGraphBase<DecartData> {
 
-
+    private boolean showOutBounds;
     private float backgroundInkingMultiplier = 1.2f;
 
     private List<RectF> filledRects = new LinkedList<>();
@@ -51,6 +54,11 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
     public DecartGraph(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+    }
+
+    public void setShowOutBounds(boolean showOutBounds) {
+        this.showOutBounds = showOutBounds;
+        invalidate();
     }
 
     @Override
@@ -91,16 +99,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                 drawDashedLine(valuePoints, dataSet.getColor(0), dataSet.getColor(1), false);
             } else {
 
-                for (int j = 0; j < valuePoints.length * mPhaseX; j += 2) {
-
-                    if (isOffContentRight(valuePoints[j]))
-                        break;
-
-                    // make sure the lines don't do shitty things outside bounds
-                    if (j != 0 && isOffContentLeft(valuePoints[j])
-                            && isOffContentTop(valuePoints[j + 1])
-                            && isOffContentBottom(valuePoints[j + 1]))
-                        continue;
+                for (int j = 0; j < valuePoints.length * mPhaseX; j += 2) { // valuePoints[j] - pointX, valuePoints[j+1] - pointY
 
                     // Set the color for the currently drawn value. If the index is
                     // out of bounds, reuse colors.
@@ -111,6 +110,45 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                     mRenderPaint.setAlpha(dataSet.getScatterShapeAlpha());
                     int initialBackgroundAlpha = mGridBackgroundPaint.getAlpha();
                     mGridBackgroundPaint.setAlpha(dataSet.getScatterShapeAlpha());
+
+                    if (isOffContentRight(valuePoints[j] - shapeHalf)) {
+                        if (!showOutBounds) {
+                            break;
+                        }
+                        float[] vals = new float[2];
+                        vals[0] = mContentRect.right;
+                        vals[1] = valuePoints[j + 1];
+                        drawRect(8, shapeHalf, vals, 0, sizeMultiplier, true);
+                    }
+
+                    if (showOutBounds && isOffContentLeft(valuePoints[j] + shapeHalf)) {
+                        float[] vals = new float[2];
+                        vals[0] = mContentRect.left;
+                        vals[1] = valuePoints[j + 1];
+                        drawRect(8, shapeHalf, vals, 0, sizeMultiplier, true);
+                    }
+
+                    if (showOutBounds && isOffContentBottom(valuePoints[j + 1] - shapeHalf)) {
+                        float[] vals = new float[2];
+                        vals[0] = valuePoints[j];
+                        vals[1] = mContentRect.bottom;
+                        drawRect(shapeHalf, 8, vals, 0, sizeMultiplier, true);
+                    }
+
+                    if (showOutBounds && isOffContentTop(valuePoints[j + 1] + shapeHalf)) {
+                        float[] vals = new float[2];
+                        vals[0] = valuePoints[j];
+                        vals[1] = mContentRect.top;
+                        drawRect(shapeHalf, 8, vals, 0, sizeMultiplier, true);
+                    }
+
+                    // make sure the lines don't do shitty things outside bounds
+                    if (j != 0
+                            && isOffContentLeft(valuePoints[j])
+                            && isOffContentTop(valuePoints[j + 1])
+                            && isOffContentBottom(valuePoints[j + 1])) {
+                        continue;
+                    }
 
                     if (shape == GraphShape.SQUARE) {
                         drawSquare(shapeHalf, valuePoints, j, sizeMultiplier, false);
@@ -209,6 +247,24 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         mRenderPaint.setStrokeWidth(initialStrokeWidth);
     }
 
+    private void drawRect(int widthHalf, int heightHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
+        if (drawInking) {
+            //draw inking
+            float widthHalfMI = widthHalf * sizeMultiplier * backgroundInkingMultiplier;
+            float heightHalfMI = heightHalf * sizeMultiplier * backgroundInkingMultiplier;
+            mDrawCanvas.drawRect((valuePoints[j] - widthHalfMI),
+                    (valuePoints[j + 1] - heightHalfMI),
+                    (valuePoints[j] + widthHalfMI),
+                    (valuePoints[j + 1] + heightHalfMI), mGridBackgroundPaint);
+        }
+        //draw shape
+        float widthHalfMI = widthHalf * sizeMultiplier;
+        float heightHalfMI = heightHalf * sizeMultiplier;
+        mDrawCanvas.drawRect((valuePoints[j] - widthHalfMI),
+                (valuePoints[j + 1] - heightHalfMI),
+                (valuePoints[j] + widthHalfMI),
+                (valuePoints[j + 1] + heightHalfMI), mRenderPaint);
+    }
 
     private void drawSquare(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
         if (drawInking) {
