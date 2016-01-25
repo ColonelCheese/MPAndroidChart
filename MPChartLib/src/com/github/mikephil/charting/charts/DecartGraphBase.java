@@ -2326,8 +2326,13 @@ public abstract class DecartGraphBase<T extends DecartData> extends
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         if (w > 0 && h > 0 && h < 5000) {
             // create a new bitmap with the new dimensions
-            mDrawBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_4444);
-            mDrawCanvas = new Canvas(mDrawBitmap);
+            try {
+                mDrawBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_4444);
+                mDrawCanvas = new Canvas(mDrawBitmap);
+            } catch (OutOfMemoryError e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+                System.gc();
+            }
         }
 
         // prepare content rect and matrices
@@ -3147,7 +3152,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
     }
 
     /**
-     * returns true if the specified point (y-axis) exceeds the limits of what
+     * returns true if the specified point (y-naxis) exceeds the limits of what
      * is visible on the bottom
      *
      * @param v
