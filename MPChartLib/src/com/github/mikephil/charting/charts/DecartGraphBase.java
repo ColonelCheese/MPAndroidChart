@@ -3696,7 +3696,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
 
 
         // touch out of chart
-        if (xTouchVal < -mTouchOffset || xTouchVal > mDeltaX + mTouchOffset)
+        if (xTouchVal < -mTouchOffset || (mDeltaX > 1f && xTouchVal > mDeltaX + mTouchOffset))
             return null;
 
         ArrayList<DecartHighlight> valsAtIndex = getYValsNearXValue((float) xTouchVal, (float) yTouchVal, mTouchOffset);
