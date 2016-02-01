@@ -2330,8 +2330,14 @@ public abstract class DecartGraphBase<T extends DecartData> extends
                 mDrawBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_4444);
                 mDrawCanvas = new Canvas(mDrawBitmap);
             } catch (OutOfMemoryError e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                System.gc();
+                // try to create a new bitmap after System.gc() 
+                try {
+                    System.gc();
+                    mDrawBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_4444);
+                    mDrawCanvas = new Canvas(mDrawBitmap);
+                } catch (OutOfMemoryError e1) {
+                    System.gc();
+                }
             }
         }
 
