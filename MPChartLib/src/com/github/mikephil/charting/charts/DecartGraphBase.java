@@ -1,5 +1,7 @@
 package com.github.mikephil.charting.charts;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
@@ -20,7 +22,6 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.Pair;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,8 +50,6 @@ import com.github.mikephil.charting.utils.ValueFormatter;
 import com.github.mikephil.charting.utils.XLabels.XLabelPosition;
 import com.github.mikephil.charting.utils.YLabels;
 import com.github.mikephil.charting.utils.YLabels.YLabelPosition;
-import com.nineoldandroids.animation.ObjectAnimator;
-import com.nineoldandroids.animation.ValueAnimator;
 
 import java.io.File;
 import java.io.FileOutputStream;
