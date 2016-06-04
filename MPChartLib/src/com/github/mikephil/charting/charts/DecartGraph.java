@@ -41,7 +41,8 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
      * enum that defines the shape that is drawn where the values are
      */
     public enum GraphShape {
-        CROSS, TRIANGLE, CIRCLE, STROKE_CIRCLE, SQUARE, CUSTOM, LINE, DASHED_LINE, SMOOTHEDLINE, SMOOTHED_AND_DASHED_LINE
+        CROSS, TRIANGLE, CIRCLE, STROKE_CIRCLE, SQUARE, CUSTOM, LINE, DASHED_LINE, SMOOTHEDLINE, SMOOTHED_AND_DASHED_LINE,
+        CIRCLE_HIGHLIGHT, TRIANGLE_HIGHLIGHT
     }
 
     public DecartGraph(Context context) {
@@ -160,6 +161,12 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                         drawCross(shapeHalf, valuePoints, j, sizeMultiplier);
                     } else if (shape == GraphShape.TRIANGLE) {
                         drawTrianlge(shapeHalf, valuePoints, j, sizeMultiplier, false);
+                    } else if (shape == GraphShape.CIRCLE_HIGHLIGHT) {
+                        drawTransparentStrokeCircle(shapeHalf, valuePoints, j, sizeMultiplier * 2);
+                        drawCircle(shapeHalf, valuePoints, j, sizeMultiplier, false);
+                    } else if (shape == GraphShape.TRIANGLE_HIGHLIGHT) {
+                        drawTransparentStrokeTrianlge(shapeHalf, valuePoints, j, sizeMultiplier * 2);
+                        drawTrianlge(shapeHalf, valuePoints, j, sizeMultiplier, false);
                     } else if (shape == GraphShape.CUSTOM) {
 
                         Path customShape = dataSet.getCustomScatterShape();
@@ -180,6 +187,30 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                 }
             }
         }
+    }
+
+    private void drawTransparentStrokeTrianlge(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier) {
+        int initialColor = mRenderPaint.getColor();
+        Paint.Style initialStyle = mRenderPaint.getStyle();
+        float initialStrokeWidth = mRenderPaint.getStrokeWidth();
+        int initialAlpha = mRenderPaint.getAlpha();
+
+        mRenderPaint.setStyle(Paint.Style.STROKE);
+        mRenderPaint.setStrokeWidth(3f);
+
+        float shapeHalfM = shapeHalf * sizeMultiplier;
+        drawSimpleTriangle(valuePoints[j], valuePoints[j + 1], shapeHalfM, mRenderPaint);
+
+        mRenderPaint.setStyle(Paint.Style.FILL);
+        mRenderPaint.setColor(Color.WHITE);
+        mRenderPaint.setAlpha(highlightAlpha);
+
+        drawSimpleTriangle(valuePoints[j], valuePoints[j + 1], shapeHalfM, mRenderPaint);
+
+        mRenderPaint.setColor(initialColor);
+        mRenderPaint.setStyle(initialStyle);
+        mRenderPaint.setStrokeWidth(initialStrokeWidth);
+        mRenderPaint.setAlpha(initialAlpha);
     }
 
     private void drawTrianlge(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
@@ -242,6 +273,29 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         mRenderPaint.setColor(Color.WHITE);
         mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier,
                 mRenderPaint);
+        mRenderPaint.setColor(initialColor);
+        mRenderPaint.setStyle(initialStyle);
+        mRenderPaint.setStrokeWidth(initialStrokeWidth);
+    }
+
+    private void drawTransparentStrokeCircle(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier) {
+        int initialColor = mRenderPaint.getColor();
+        Paint.Style initialStyle = mRenderPaint.getStyle();
+        float initialStrokeWidth = mRenderPaint.getStrokeWidth();
+        int initialAlpha = mRenderPaint.getAlpha();
+
+        mRenderPaint.setStyle(Paint.Style.STROKE);
+        mRenderPaint.setStrokeWidth(3f);
+        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier,
+                mRenderPaint);
+
+        mRenderPaint.setStyle(Paint.Style.FILL);
+        mRenderPaint.setColor(Color.WHITE);
+        mRenderPaint.setAlpha(highlightAlpha);
+        mDrawCanvas.drawCircle(valuePoints[j], valuePoints[j + 1], shapeHalf * sizeMultiplier,
+                mRenderPaint);
+
+        mRenderPaint.setAlpha(initialAlpha);
         mRenderPaint.setColor(initialColor);
         mRenderPaint.setStyle(initialStyle);
         mRenderPaint.setStrokeWidth(initialStrokeWidth);
