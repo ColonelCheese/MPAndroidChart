@@ -2920,7 +2920,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * @param xPos
      * @param positions
      */
-    private void drawYLabels(float xPos, float[] positions, float yOffset) {
+    protected void drawYLabels(float xPos, float[] positions, float yOffset) {
 
         // draw
         for (int i = 0; i < mYLabels.mEntryCount; i++) {
