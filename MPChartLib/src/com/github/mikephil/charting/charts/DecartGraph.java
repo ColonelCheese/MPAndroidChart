@@ -461,8 +461,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         // if values are drawn
         if (mDrawYValues && mData.getEntriesCount() < mMaxVisibleCount * mTrans.getScaleX()) {
 
-            ArrayList<DecartDataSet> dataSets = mData
-                    .getDataSets();
+            ArrayList<DecartDataSet> dataSets = mData.getDataSets();
 
             for (int i = 0; i < mData.getDataSetCount(); i++) {
                 DecartDataSet dataSet = dataSets.get(i);
@@ -489,7 +488,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
                         float pointX = positions[j];
                         if (isOffContentRight(pointX))
-                            break;
+                            continue;
 
                         float pointY = positions[j + 1];
                         if (isOffContentLeft(pointX) || isOffContentTop(pointY)
