@@ -3704,7 +3704,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
         if (xTouchVal < -mTouchOffset || (xTouchVal > mXChartMax))
             return null;
 
-        ArrayList<DecartHighlight> valsAtIndex = getYValsNearXValue((float) xTouchVal, (float) yTouchVal, mTouchOffset);
+        ArrayList<DecartHighlight> valsAtIndex = getYValsNearXValue((float) xTouchVal, (float) yTouchVal, getYValsNearXValueRound());
 
         DecartHighlight selectedEntry = Utils.getClosestDataSetIndex(valsAtIndex, (float) xTouchVal, (float) yTouchVal);
 
@@ -3712,6 +3712,10 @@ public abstract class DecartGraphBase<T extends DecartData> extends
             return null;
 
         return selectedEntry;
+    }
+
+    protected float getYValsNearXValueRound() {
+        return mTouchOffset;
     }
 
     /**
