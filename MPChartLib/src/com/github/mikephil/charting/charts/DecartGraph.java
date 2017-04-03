@@ -33,9 +33,10 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
     private List<RectF> filledRects = new LinkedList<>();
 
-    private static final float highlightRadius = Utils.convertDpToPixel(36);
-    private static final float highlightWhiteRadius = Utils.convertDpToPixel(18);
-    private static final int highlightAlpha = 60;
+    /*private static final float highlightRadius = Utils.convertDpToPixel(36);
+    private static final float highlightWhiteRadius = Utils.convertDpToPixel(18);*/
+
+    private int highlightAlpha = 60;
 
     /**
      * enum that defines the shape that is drawn where the values are
@@ -438,7 +439,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         return path;
     }
 
-    public float getSizeMultiplyer(DecartDataSet dataSet, int j) {
+    protected float getSizeMultiplyer(DecartDataSet dataSet, int j) {
         return 1f;
     }
 
@@ -460,9 +461,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         filledRects.clear();
         // if values are drawn
         if (mDrawYValues && mData.getEntriesCount() < mMaxVisibleCount * mTrans.getScaleX()) {
-
             ArrayList<DecartDataSet> dataSets = mData.getDataSets();
-
             for (int i = 0; i < mData.getDataSetCount(); i++) {
                 DecartDataSet dataSet = dataSets.get(i);
                 if (!dataSet.getDisableValueDrawing()) {
@@ -475,35 +474,27 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                 }
             }
             for (int i = 0; i < mData.getDataSetCount(); i++) {
-
                 DecartDataSet dataSet = dataSets.get(i);
                 if (!dataSet.getDisableValueDrawing()) {
                     ArrayList<DecartEntry> entries = dataSet.getEntries();
-
                     float[] positions = mTrans.generateTransformedValuesDecart(entries, mPhaseY);
-
                     float shapeSize = dataSet.getScatterShapeSize();
-
                     for (int j = 0; j < positions.length * mPhaseX; j += 2) {
-
                         float pointX = positions[j];
                         if (isOffContentRight(pointX))
                             continue;
-
                         float pointY = positions[j + 1];
                         if (isOffContentLeft(pointX) || isOffContentTop(pointY)
                                 || isOffContentBottom(pointY))
                             continue;
-
                         String shapeLabel = getShapeLabel(dataSet, j / 2);
-
                         if (mDrawUnitInChart) {
                             mDrawCanvas.drawText(shapeLabel,
                                     positions[j],
                                     positions[j + 1] - shapeSize, mValuePaint);
                         } else {
                             float textWidth = mValuePaint.measureText(shapeLabel);
-                            mGridBackgroundPaint.setAlpha(200);
+                            //mGridBackgroundPaint.setAlpha(200);
                             //FIXME: replace magic numbers by dimens and add separate Paint for text bg
                             RectF rect = new RectF(
                                     pointX + shapeSize + 4,
@@ -535,8 +526,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                                     continue;
                                 } else {
                                     if (!isOffContentRect(rectL)) {
-                                        mDrawCanvas.drawRoundRect(rectL, 8f, 8f,
-                                                mGridBackgroundPaint);
+                                        //mDrawCanvas.drawRoundRect(rectL, 8f, 8f, mGridBackgroundPaint);
                                         mDrawCanvas.drawText(shapeLabel,
                                                 pointX - textWidth / 2f - 4 - shapeSize,
                                                 pointY + mValuePaint.getTextSize() / 2,
@@ -548,8 +538,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                             }
                             //drawTextOnRightSide:
                             if (!isOffContentRect(rect)) {
-                                mDrawCanvas.drawRoundRect(rect, 8f, 8f,
-                                        mGridBackgroundPaint);
+                                //mDrawCanvas.drawRoundRect(rect, 8f, 8f, mGridBackgroundPaint);
                                 mDrawCanvas.drawText(shapeLabel,
                                         pointX + textWidth / 2f + 4 + shapeSize,
                                         pointY + mValuePaint.getTextSize() / 2,
@@ -565,25 +554,17 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
     @Override
     protected void drawHighlights() {
-
         for (int i = 0; i < mIndicesToHightlight.length; i++) {
-
-            DecartDataSet set = mData.getDataSetByIndex(mIndicesToHightlight[i]
-                    .getDataSetIndex());
-
+            DecartDataSet set = mData.getDataSetByIndex(mIndicesToHightlight[i].getDataSetIndex());
             if (set == null)
                 continue;
-
             float xVal = mIndicesToHightlight[i].getDecartEntry().getXVal(); // get the
             // x-position
-
             float yVal = mIndicesToHightlight[i].getDecartEntry().getYVal();
             // y-position
-
             float[] pts = new float[]{
                     xVal, mYChartMax, xVal, mYChartMin, 0, yVal, mDeltaX, yVal
             };
-
             mTrans.pointValuesToPixel(pts);
             // draw the highlight lines
             drawHighlight(mIndicesToHightlight[i], pts);
@@ -596,31 +577,31 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         mHighlightPaint.setAlpha(highlightAlpha);
         float x = pts[0];
         float y = pts[5];
-        mDrawCanvas.drawCircle(x, y, highlightRadius, mHighlightPaint);
-
+        mDrawCanvas.drawCircle(x, y, getHighlightRadius(mData.getDataSetByIndex(decartHighlight.getDataSetIndex()), decartHighlight.getmEntryIndex()), mHighlightPaint);
         mHighlightPaint.setColor(Color.WHITE);
         GraphShape scatterShape = mData.getDataSetByIndex(decartHighlight.getDataSetIndex()).getScatterShape();
         if (scatterShape == GraphShape.TRIANGLE) {
-            drawSimpleTriangle(x, y, highlightWhiteRadius, mHighlightPaint);
+            drawSimpleTriangle(x, y, getWhiteHighlightRadius(mData.getDataSetByIndex(decartHighlight.getDataSetIndex()), decartHighlight.getmEntryIndex()), mHighlightPaint);
         } else {
-            mDrawCanvas.drawCircle(x, y, highlightWhiteRadius, mHighlightPaint);
+            mDrawCanvas.drawCircle(x, y, getWhiteHighlightRadius(mData.getDataSetByIndex(decartHighlight.getDataSetIndex()), decartHighlight.getmEntryIndex()), mHighlightPaint);
         }
+    }
+
+    private float getWhiteHighlightRadius(DecartDataSet dataSet, int j) {
+        float sizeM = getSizeMultiplyer(dataSet, j);
+        float size = dataSet.getScatterShapeSize();
+        return 0;
+    }
+
+    protected float getHighlightRadius(DecartDataSet dataSet, int j) {
+        float sizeM = getSizeMultiplyer(dataSet, j);
+        float size = dataSet.getScatterShapeSize();
+        return size * 1.25f * sizeM;
     }
 
     @Override
     protected void drawAdditional() {
-
-    }
-
-    /**
-     * Returns all possible predefined scattershapes.
-     *
-     * @return
-     */
-    public static GraphShape[] getAllPossibleShapes() {
-        return new GraphShape[]{
-                GraphShape.SQUARE, GraphShape.CIRCLE, GraphShape.TRIANGLE, GraphShape.CROSS
-        };
+        //nothing to draw
     }
 
     class CPoint {
