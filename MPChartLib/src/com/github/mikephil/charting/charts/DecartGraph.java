@@ -87,7 +87,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
             float[] valuePoints = mTrans.generateTransformedValuesDecart(entries, mPhaseY);
 
-            GraphShape shape = dataSet.getScatterShape();
+            GraphShape shape = getDataSetShape(dataSet);
 
             if (shape == GraphShape.SMOOTHEDLINE) {
                 getPaintColor(dataSet, 0);
@@ -102,6 +102,8 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
             } else {
 
                 for (int j = 0; j < valuePoints.length * mPhaseX; j += 2) { // valuePoints[j] - pointX, valuePoints[j+1] - pointY
+
+                    shape = getEntryShape(dataSet, j / 2);
 
                     // Set the color for the currently drawn value. If the index is
                     // out of bounds, reuse colors.
@@ -188,6 +190,14 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                 }
             }
         }
+    }
+
+    protected GraphShape getEntryShape(DecartDataSet dataSet, int i) {
+        return getDataSetShape(dataSet);
+    }
+
+    protected GraphShape getDataSetShape(DecartDataSet dataSet) {
+        return dataSet.getScatterShape();
     }
 
     private void drawTransparentStrokeTrianlge(int shapeHalf, float[] valuePoints, int j, float sizeMultiplier) {
@@ -443,6 +453,10 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         return 1f;
     }
 
+    protected Bitmap getCustomShapeBitmap(DecartDataSet dataSet, int j) {
+        return null;
+    }
+
     public void getPaintColor(DecartDataSet dataSet, int itemIndex) {
         mRenderPaint.setColor(dataSet.getColor());
     }
@@ -450,10 +464,6 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
     public String getShapeLabel(DecartDataSet dataSet, int itemIndex) {
         float val = ((DecartEntry) dataSet.getEntries().get(itemIndex)).getYVal();
         return mValueFormatter.getFormattedValue(val);
-    }
-
-    protected Bitmap getCustomShapeBitmap(DecartDataSet dataSet, int j) {
-        return null;
     }
 
     @Override
