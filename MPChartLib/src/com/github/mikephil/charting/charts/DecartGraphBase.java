@@ -2400,7 +2400,7 @@ public abstract class DecartGraphBase<T extends DecartData> extends
      * Sets up all the matrices that will be used for scaling the coordinates to
      * the display. Offset and Value-px.
      */
-    private void prepareMatrix() {
+    protected void prepareMatrix() {
 
         mTrans.prepareMatrixValuePx(this);
 
