@@ -115,40 +115,35 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                     int initialBackgroundAlpha = mGridBackgroundPaint.getAlpha();
                     mGridBackgroundPaint.setAlpha(dataSet.getScatterShapeAlpha());
 
-                    if (isOffContentRight(valuePoints[j] - shapeHalf)) {
-                        if (!showOutBounds) {
+                    if (showOutBounds && isOffContentRight(valuePoints[j] - shapeHalf)) {
+                        /*if (!showOutBounds) {
                             break;
-                        }
+                        }*/
                         float[] vals = new float[2];
                         vals[0] = mContentRect.right;
                         vals[1] = valuePoints[j + 1];
                         drawRect(8, shapeHalf, vals, 0, sizeMultiplier, true);
                     }
-
                     if (showOutBounds && isOffContentLeft(valuePoints[j] + shapeHalf)) {
                         float[] vals = new float[2];
                         vals[0] = mContentRect.left;
                         vals[1] = valuePoints[j + 1];
                         drawRect(8, shapeHalf, vals, 0, sizeMultiplier, true);
                     }
-
                     if (showOutBounds && isOffContentBottom(valuePoints[j + 1] - shapeHalf)) {
                         float[] vals = new float[2];
                         vals[0] = valuePoints[j];
                         vals[1] = mContentRect.bottom;
                         drawRect(shapeHalf, 8, vals, 0, sizeMultiplier, true);
                     }
-
                     if (showOutBounds && isOffContentTop(valuePoints[j + 1] + shapeHalf)) {
                         float[] vals = new float[2];
                         vals[0] = valuePoints[j];
                         vals[1] = mContentRect.top;
                         drawRect(shapeHalf, 8, vals, 0, sizeMultiplier, true);
                     }
-
                     // make sure the lines don't do shitty things outside bounds
-                    if (j != 0
-                            && isOffContentLeft(valuePoints[j])
+                    if (j != 0 && isOffContentLeft(valuePoints[j])
                             && isOffContentTop(valuePoints[j + 1])
                             && isOffContentBottom(valuePoints[j + 1])) {
                         continue;
