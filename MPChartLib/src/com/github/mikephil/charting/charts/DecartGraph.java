@@ -363,8 +363,8 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         }
     }
 
-    private void drawCustomShapeBitmap(Bitmap bitmap, float[] valuePoints, int j, int shapeHalf, float sizeMultiplier) {
-        float sideHalfSize = shapeHalf * sizeMultiplier * 0.75f;
+    protected void drawCustomShapeBitmap(Bitmap bitmap, float[] valuePoints, int j, int shapeHalf, float sizeMultiplier) {
+        float sideHalfSize = shapeHalf * sizeMultiplier;
         float left = valuePoints[j] - sideHalfSize;
         float top = valuePoints[j + 1] - sideHalfSize;
         float right = valuePoints[j] + sideHalfSize;
