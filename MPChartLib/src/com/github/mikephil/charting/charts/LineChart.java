@@ -414,7 +414,7 @@ public class LineChart extends BarLineChartBase<LineData> {
         }
     }
 
-    private void drawValue(LineDataSet dataSet, int valOffset){
+    protected void drawValue(LineDataSet dataSet, int valOffset){
         ArrayList<Entry> entries = dataSet.getYVals();
 
         float[] positions = mTrans.generateTransformedValuesLineScatter(entries, mPhaseY);
