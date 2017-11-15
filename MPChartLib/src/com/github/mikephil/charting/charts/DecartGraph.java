@@ -28,15 +28,15 @@ import javax.xml.transform.dom.DOMLocator;
  */
 public class DecartGraph extends DecartGraphBase<DecartData> {
 
-    private boolean showOutBounds;
-    private float backgroundInkingMultiplier = 1.2f;
+    protected boolean showOutBounds;
+    protected float backgroundInkingMultiplier = 1.2f;
 
-    private List<RectF> filledRects = new LinkedList<>();
+    protected List<RectF> filledRects = new LinkedList<>();
 
-    /*private static final float highlightRadius = Utils.convertDpToPixel(36);
-    private static final float highlightWhiteRadius = Utils.convertDpToPixel(18);*/
+    protected static final float highlightRadius = Utils.convertDpToPixel(36);
+    protected static final float highlightWhiteRadius = Utils.convertDpToPixel(18);
 
-    private int highlightAlpha = 60;
+    protected int highlightAlpha = 60;
 
     /**
      * enum that defines the shape that is drawn where the values are
