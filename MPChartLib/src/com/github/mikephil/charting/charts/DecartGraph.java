@@ -29,6 +29,9 @@ import javax.xml.transform.dom.DOMLocator;
 public class DecartGraph extends DecartGraphBase<DecartData> {
 
     protected boolean showOutBounds;
+    protected boolean drawInking;
+    protected boolean drawInkingOutBounds;
+
     protected float backgroundInkingMultiplier = 1.2f;
 
     protected List<RectF> filledRects = new LinkedList<>();
@@ -75,7 +78,6 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
     @Override
     protected void drawData() {
-
         ArrayList<DecartDataSet> dataSets = mData.getDataSets();
 
         for (int i = 0; i < mData.getDataSetCount(); i++) {
@@ -122,25 +124,25 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                         float[] vals = new float[2];
                         vals[0] = mContentRect.right;
                         vals[1] = valuePoints[j + 1];
-                        drawRect(8, shapeHalf, vals, 0, sizeMultiplier, true);
+                        drawRect(8, shapeHalf, vals, 0, sizeMultiplier, drawInkingOutBounds);
                     }
                     if (showOutBounds && isOffContentLeft(valuePoints[j] + shapeHalf)) {
                         float[] vals = new float[2];
                         vals[0] = mContentRect.left;
                         vals[1] = valuePoints[j + 1];
-                        drawRect(8, shapeHalf, vals, 0, sizeMultiplier, true);
+                        drawRect(8, shapeHalf, vals, 0, sizeMultiplier, drawInkingOutBounds);
                     }
                     if (showOutBounds && isOffContentBottom(valuePoints[j + 1] - shapeHalf)) {
                         float[] vals = new float[2];
                         vals[0] = valuePoints[j];
                         vals[1] = mContentRect.bottom;
-                        drawRect(shapeHalf, 8, vals, 0, sizeMultiplier, true);
+                        drawRect(shapeHalf, 8, vals, 0, sizeMultiplier, drawInkingOutBounds);
                     }
                     if (showOutBounds && isOffContentTop(valuePoints[j + 1] + shapeHalf)) {
                         float[] vals = new float[2];
                         vals[0] = valuePoints[j];
                         vals[1] = mContentRect.top;
-                        drawRect(shapeHalf, 8, vals, 0, sizeMultiplier, true);
+                        drawRect(shapeHalf, 8, vals, 0, sizeMultiplier, drawInkingOutBounds);
                     }
                     // make sure the lines don't do shitty things outside bounds
                     if (j != 0 && isOffContentLeft(valuePoints[j])
@@ -150,21 +152,21 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                     }
 
                     if (shape == GraphShape.SQUARE) {
-                        drawSquare(shapeHalf, valuePoints, j, sizeMultiplier, false);
+                        drawSquare(shapeHalf, valuePoints, j, sizeMultiplier, drawInking);
                     } else if (shape == GraphShape.STROKE_CIRCLE) {
                         drawStrokeCircle(shapeHalf, valuePoints, j, sizeMultiplier);
                     } else if (shape == GraphShape.CIRCLE) {
-                        drawCircle(shapeHalf, valuePoints, j, sizeMultiplier, false);
+                        drawCircle(shapeHalf, valuePoints, j, sizeMultiplier, drawInking);
                     } else if (shape == GraphShape.CROSS) {
                         drawCross(shapeHalf, valuePoints, j, sizeMultiplier);
                     } else if (shape == GraphShape.TRIANGLE) {
-                        drawTrianlge(shapeHalf, valuePoints, j, sizeMultiplier, false);
+                        drawTrianlge(shapeHalf, valuePoints, j, sizeMultiplier, drawInking);
                     } else if (shape == GraphShape.CIRCLE_HIGHLIGHT) {
                         drawTransparentStrokeCircle(shapeHalf, valuePoints, j, sizeMultiplier * 2);
-                        drawCircle(shapeHalf, valuePoints, j, sizeMultiplier, false);
+                        drawCircle(shapeHalf, valuePoints, j, sizeMultiplier, drawInking);
                     } else if (shape == GraphShape.TRIANGLE_HIGHLIGHT) {
                         drawTransparentStrokeTrianlge(shapeHalf, valuePoints, j, sizeMultiplier * 2);
-                        drawTrianlge(shapeHalf, valuePoints, j, sizeMultiplier, false);
+                        drawTrianlge(shapeHalf, valuePoints, j, sizeMultiplier, drawInking);
                     } else if (shape == GraphShape.CUSTOM) {
 
                         Path customShape = dataSet.getCustomScatterShape();
