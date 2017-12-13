@@ -28,41 +28,41 @@ public class BarLineChartTouchListener<T extends BarLineChartBase<? extends BarL
         extends SimpleOnGestureListener implements OnTouchListener {
 
     /** the original touch-matrix from the chart */
-    private Matrix mMatrix = new Matrix();
+    protected Matrix mMatrix = new Matrix();
 
     /** matrix for saving the original matrix state */
-    private Matrix mSavedMatrix = new Matrix();
+    protected Matrix mSavedMatrix = new Matrix();
 
     /** point where the touch action started */
-    private PointF mTouchStartPoint = new PointF();
+    protected PointF mTouchStartPoint = new PointF();
 
     /** center between two pointers (fingers on the display) */
-    private PointF mTouchPointCenter = new PointF();
+    protected PointF mTouchPointCenter = new PointF();
 
     // states
-    private static final int NONE = 0;
-    private static final int DRAG = 1;
+    protected static final int NONE = 0;
+    protected static final int DRAG = 1;
 
-    private static final int X_ZOOM = 2;
-    private static final int Y_ZOOM = 3;
-    private static final int PINCH_ZOOM = 4;
-    private static final int POST_ZOOM = 5;
+    protected static final int X_ZOOM = 2;
+    protected static final int Y_ZOOM = 3;
+    protected static final int PINCH_ZOOM = 4;
+    protected static final int POST_ZOOM = 5;
 
     /** integer field that holds the current touch-state */
-    private int mTouchMode = NONE;
+    protected int mTouchMode = NONE;
 
-    private float mSavedXDist = 1f;
-    private float mSavedYDist = 1f;
-    private float mSavedDist = 1f;
+    protected float mSavedXDist = 1f;
+    protected float mSavedYDist = 1f;
+    protected float mSavedDist = 1f;
 
     /** the last highlighted object */
-    private Highlight mLastHighlighted;
+    protected Highlight mLastHighlighted;
 
     /** the chart the listener represents */
-    private T mChart;
+    protected T mChart;
 
     /** the gesturedetector used for detecting taps and longpresses, ... */
-    private GestureDetector mGestureDetector;
+    protected GestureDetector mGestureDetector;
 
     public BarLineChartTouchListener(T chart, Matrix start) {
         this.mChart = chart;
@@ -178,7 +178,7 @@ public class BarLineChartTouchListener<T extends BarLineChartBase<? extends BarL
      *
      * @param event
      */
-    private void saveTouchStart(MotionEvent event) {
+    protected void saveTouchStart(MotionEvent event) {
 
         mSavedMatrix.set(mMatrix);
         mTouchStartPoint.set(event.getX(), event.getY());
@@ -189,7 +189,7 @@ public class BarLineChartTouchListener<T extends BarLineChartBase<? extends BarL
      *
      * @param event
      */
-    private void performDrag(MotionEvent event) {
+    protected void performDrag(MotionEvent event) {
 
         mMatrix.set(mSavedMatrix);
         PointF dragPoint = new PointF(event.getX(), event.getY());
@@ -209,7 +209,7 @@ public class BarLineChartTouchListener<T extends BarLineChartBase<? extends BarL
      *
      * @param event
      */
-    private void performZoom(MotionEvent event) {
+    protected void performZoom(MotionEvent event) {
 
         if (event.getPointerCount() >= 2) {
 
@@ -271,7 +271,7 @@ public class BarLineChartTouchListener<T extends BarLineChartBase<? extends BarL
      * @param startY
      * @return
      */
-    private static float distance(float eventX, float startX, float eventY, float startY) {
+    protected static float distance(float eventX, float startX, float eventY, float startY) {
         float dx = eventX - startX;
         float dy = eventY - startY;
         return (float) Math.sqrt(dx * dx + dy * dy);
@@ -283,7 +283,7 @@ public class BarLineChartTouchListener<T extends BarLineChartBase<? extends BarL
      * @param point
      * @param event
      */
-    private static void midPoint(PointF point, MotionEvent event) {
+    protected static void midPoint(PointF point, MotionEvent event) {
         float x = event.getX(0) + event.getX(1);
         float y = event.getY(0) + event.getY(1);
         point.set(x / 2f, y / 2f);
@@ -295,7 +295,7 @@ public class BarLineChartTouchListener<T extends BarLineChartBase<? extends BarL
      * @param event
      * @return
      */
-    private static float spacing(MotionEvent event) {
+    protected static float spacing(MotionEvent event) {
         float x = event.getX(0) - event.getX(1);
         float y = event.getY(0) - event.getY(1);
         return (float) Math.sqrt(x * x + y * y);
@@ -308,7 +308,7 @@ public class BarLineChartTouchListener<T extends BarLineChartBase<? extends BarL
      * @param e
      * @return
      */
-    private static float getXDist(MotionEvent e) {
+    protected static float getXDist(MotionEvent e) {
         float x = Math.abs(e.getX(0) - e.getX(1));
         return x;
     }
@@ -320,7 +320,7 @@ public class BarLineChartTouchListener<T extends BarLineChartBase<? extends BarL
      * @param e
      * @return
      */
-    private static float getYDist(MotionEvent e) {
+    protected static float getYDist(MotionEvent e) {
         float y = Math.abs(e.getY(0) - e.getY(1));
         return y;
     }
