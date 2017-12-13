@@ -8,7 +8,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 
 import com.github.mikephil.charting.data.DecartData;
 import com.github.mikephil.charting.data.DecartDataSet;
@@ -20,16 +19,18 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.xml.transform.dom.DOMLocator;
-
 /**
  * The Decart's orthogonal graph. Draws dots, triangles, squares and custom shapes into the
  * chartview.
  */
 public class DecartGraph extends DecartGraphBase<DecartData> {
 
+    protected int offContentRectWidthDp = 5;
+
     protected boolean showOutBounds;
+
     protected boolean drawInking;
+
     protected boolean drawInkingOutBounds;
 
     protected float backgroundInkingMultiplier = 1.2f;
@@ -37,6 +38,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
     protected List<RectF> filledRects = new LinkedList<>();
 
     protected static final float highlightRadius = Utils.convertDpToPixel(36);
+
     protected static final float highlightWhiteRadius = Utils.convertDpToPixel(18);
 
     protected int highlightAlpha = 60;
@@ -103,6 +105,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                 drawDashedLine(valuePoints, dataSet.getColor(0), dataSet.getColor(1), false);
             } else {
 
+                int offContentRectWidthPx = Math.round(Utils.convertDpToPixel(offContentRectWidthDp));
                 for (int j = 0; j < valuePoints.length * mPhaseX; j += 2) { // valuePoints[j] - pointX, valuePoints[j+1] - pointY
 
                     shape = getEntryShape(dataSet, j / 2);
@@ -117,34 +120,33 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                     int initialBackgroundAlpha = mGridBackgroundPaint.getAlpha();
                     mGridBackgroundPaint.setAlpha(dataSet.getScatterShapeAlpha());
 
+                    int offContentRectHeightPx = Math.round(shapeHalf * sizeMultiplier * (drawInkingOutBounds ? backgroundInkingMultiplier : 1));
+
                     if (showOutBounds && isOffContentRight(valuePoints[j] - shapeHalf)) {
-                        /*if (!showOutBounds) {
-                            break;
-                        }*/
                         float[] vals = new float[2];
                         vals[0] = mContentRect.right;
                         vals[1] = valuePoints[j + 1];
-                        drawRect(8, shapeHalf, vals, 0, sizeMultiplier, drawInkingOutBounds);
+                        drawRect(offContentRectWidthPx, offContentRectHeightPx, vals, 0, drawInkingOutBounds);
                     }
                     if (showOutBounds && isOffContentLeft(valuePoints[j] + shapeHalf)) {
                         float[] vals = new float[2];
                         vals[0] = mContentRect.left;
                         vals[1] = valuePoints[j + 1];
-                        drawRect(8, shapeHalf, vals, 0, sizeMultiplier, drawInkingOutBounds);
+                        drawRect(offContentRectWidthPx, offContentRectHeightPx, vals, 0, drawInkingOutBounds);
                     }
                     if (showOutBounds && isOffContentBottom(valuePoints[j + 1] - shapeHalf)) {
                         float[] vals = new float[2];
                         vals[0] = valuePoints[j];
                         vals[1] = mContentRect.bottom;
-                        drawRect(shapeHalf, 8, vals, 0, sizeMultiplier, drawInkingOutBounds);
+                        drawRect(offContentRectHeightPx, offContentRectWidthPx, vals, 0, drawInkingOutBounds);
                     }
                     if (showOutBounds && isOffContentTop(valuePoints[j + 1] + shapeHalf)) {
                         float[] vals = new float[2];
                         vals[0] = valuePoints[j];
                         vals[1] = mContentRect.top;
-                        drawRect(shapeHalf, 8, vals, 0, sizeMultiplier, drawInkingOutBounds);
+                        drawRect(offContentRectHeightPx, offContentRectWidthPx, vals, 0, drawInkingOutBounds);
                     }
-                    // make sure the lines don't do shitty things outside bounds
+
                     if (j != 0 && isOffContentLeft(valuePoints[j])
                             && isOffContentTop(valuePoints[j + 1])
                             && isOffContentBottom(valuePoints[j + 1])) {
@@ -309,19 +311,19 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         mRenderPaint.setStrokeWidth(initialStrokeWidth);
     }
 
-    private void drawRect(int widthHalf, int heightHalf, float[] valuePoints, int j, float sizeMultiplier, boolean drawInking) {
+    private void drawRect(int width, int height, float[] valuePoints, int j, boolean drawInking) {
         if (drawInking) {
             //draw inking
-            float widthHalfMI = widthHalf * sizeMultiplier * backgroundInkingMultiplier;
-            float heightHalfMI = heightHalf * sizeMultiplier * backgroundInkingMultiplier;
+            float widthHalfMI = width;
+            float heightHalfMI = height;
             mDrawCanvas.drawRect((valuePoints[j] - widthHalfMI),
                     (valuePoints[j + 1] - heightHalfMI),
                     (valuePoints[j] + widthHalfMI),
                     (valuePoints[j + 1] + heightHalfMI), mGridBackgroundPaint);
         }
         //draw shape
-        float widthHalfMI = widthHalf * sizeMultiplier;
-        float heightHalfMI = heightHalf * sizeMultiplier;
+        float widthHalfMI = width;
+        float heightHalfMI = height;
         mDrawCanvas.drawRect((valuePoints[j] - widthHalfMI),
                 (valuePoints[j + 1] - heightHalfMI),
                 (valuePoints[j] + widthHalfMI),
