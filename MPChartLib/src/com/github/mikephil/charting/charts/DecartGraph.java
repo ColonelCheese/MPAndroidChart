@@ -468,6 +468,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
     @Override
     protected void drawValues() {
         filledRects.clear();
+
         // if values are drawn
         if (mDrawYValues && mData.getEntriesCount() < mMaxVisibleCount * mTrans.getScaleX()) {
             ArrayList<DecartDataSet> dataSets = mData.getDataSets();
@@ -478,17 +479,18 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                 if (!dataSet.getDisableValueDrawing()) {
                     ArrayList<DecartEntry> entries = dataSet.getEntries();
 
+                    float shapeHalf = dataSet.getScatterShapeSize() / 2;
                     float[] positions = mTrans.generateTransformedValuesDecart(entries, mPhaseY);
 
-
                     for (int j = 0; j < positions.length * mPhaseX; j += 2) {
-                        float shapeHalf = dataSet.getScatterShapeSize() / 2;
                         float sizeMultiplier = getSizeMultiplyer(dataSet, j / 2);
 
-                        float left = positions[j] - shapeHalf * sizeMultiplier;
-                        float top = positions[j + 1] - shapeHalf * sizeMultiplier;
-                        float right = positions[j] + shapeHalf * sizeMultiplier;
-                        float bottom = positions[j + 1] + shapeHalf * sizeMultiplier;
+                        int shapeHalfMI = Math.round(shapeHalf * sizeMultiplier * (drawInking ? backgroundInkingMultiplier : 1));
+
+                        float left = positions[j] - shapeHalfMI;
+                        float top = positions[j + 1] - shapeHalfMI;
+                        float right = positions[j] + shapeHalfMI;
+                        float bottom = positions[j + 1] + shapeHalfMI;
 
                         filledRects.add(new RectF(left, top, right, bottom));
                     }
@@ -497,15 +499,20 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
             for (int i = 0; i < mData.getDataSetCount(); i++) {
                 DecartDataSet dataSet = dataSets.get(i);
-                if (!dataSet.getDisableValueDrawing()) {
 
+                if (!dataSet.getDisableValueDrawing()) {
                     ArrayList<DecartEntry> entries = dataSet.getEntries();
 
                     float[] positions = mTrans.generateTransformedValuesDecart(entries, mPhaseY);
+
                     float shapeSize = dataSet.getScatterShapeSize();
 
                     for (int j = 0; j < positions.length * mPhaseX; j += 2) {
                         float pointX = positions[j];
+
+                        float sizeMultiplier = getSizeMultiplyer(dataSet, j / 2);
+
+                        int shapeSizeMI = Math.round(shapeSize * Math.min(1f, sizeMultiplier) * (drawInking ? backgroundInkingMultiplier : 1));
 
                         if (isOffContentRight(pointX))
                             continue;
@@ -517,62 +524,73 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                             continue;
 
                         String shapeLabel = getShapeLabel(dataSet, j / 2);
+
                         if (mDrawUnitInChart) {
                             mDrawCanvas.drawText(shapeLabel,
                                     positions[j],
-                                    positions[j + 1] - shapeSize, mValuePaint);
+                                    positions[j + 1] - shapeSizeMI, mValuePaint);
                         } else {
                             float textWidth = mValuePaint.measureText(shapeLabel);
-                            //mGridBackgroundPaint.setAlpha(200);
-                            //FIXME: replace magic numbers by dimens and add separate Paint for text bg
+
                             RectF rect = new RectF(
-                                    pointX + shapeSize + 4,
-                                    pointY - mValuePaint.getTextSize() + 5,
-                                    pointX + shapeSize + textWidth + 4,
-                                    pointY + mValuePaint.getTextSize() + 5);
+                                    pointX + shapeSizeMI + Utils.convertDpToPixel(0),
+                                    pointY - mValuePaint.getTextSize() / 2 + Utils.convertDpToPixel(0),
+                                    pointX + shapeSizeMI + textWidth + Utils.convertDpToPixel(0),
+                                    pointY + mValuePaint.getTextSize() / 2 + Utils.convertDpToPixel(0));
+
                             boolean intersects = false;
+
                             for (RectF filledRect : filledRects) {
                                 if (rect.intersect(filledRect)) {
                                     intersects = true;
                                     break;
                                 }
                             }
+
                             if (intersects) {
                                 //try to draw on left
                                 RectF rectL = new RectF(
-                                        pointX - shapeSize - textWidth - 4,
-                                        pointY - mValuePaint.getTextSize() + 5,
-                                        pointX - shapeSize - 4,
-                                        pointY + mValuePaint.getTextSize() + 5);
+                                        pointX - shapeSizeMI - textWidth - Utils.convertDpToPixel(0),
+                                        pointY - mValuePaint.getTextSize() / 2 + Utils.convertDpToPixel(0),
+                                        pointX - shapeSizeMI - Utils.convertDpToPixel(0),
+                                        pointY + mValuePaint.getTextSize() / 2 + Utils.convertDpToPixel(0));
+
                                 boolean intersectsL = false;
+
                                 for (RectF filledRect : filledRects) {
                                     if (rectL.intersect(filledRect)) {
                                         intersectsL = true;
                                         break;
                                     }
                                 }
+
                                 if (intersectsL) {
                                     continue;
                                 } else {
+                                    //drawTextOnLeftSide
                                     if (!isOffContentRect(rectL)) {
-                                        //mDrawCanvas.drawRoundRect(rectL, 8f, 8f, mGridBackgroundPaint);
+                                        //mDrawCanvas.drawRoundRect(rectL, 4f, 4f, mGridBackgroundPaint);
+
                                         mDrawCanvas.drawText(shapeLabel,
-                                                pointX - textWidth / 2f - 4 - shapeSize,
+                                                pointX - shapeSizeMI - textWidth / 2f - Utils.convertDpToPixel(0),
                                                 pointY + mValuePaint.getTextSize() / 2,
                                                 mValuePaint);
-                                        filledRects.add(new RectF(rectL.left, pointY - shapeSize / 2, pointX + shapeSize / 2, pointY + shapeSize / 2));
+
+                                        filledRects.add(new RectF(rectL.left, pointY - shapeSizeMI / 2, pointX + shapeSizeMI / 2, pointY + shapeSizeMI / 2));
                                     }
                                     continue;
                                 }
                             }
-                            //drawTextOnRightSide:
+                            //drawTextOnRightSide
                             if (!isOffContentRect(rect)) {
-                                //mDrawCanvas.drawRoundRect(rect, 8f, 8f, mGridBackgroundPaint);
+                                //mDrawCanvas.drawRoundRect(rect, 4f, 4f, mGridBackgroundPaint);
+
                                 mDrawCanvas.drawText(shapeLabel,
-                                        pointX + textWidth / 2f + 4 + shapeSize,
+                                        pointX + shapeSizeMI + textWidth / 2f + Utils.convertDpToPixel(0),
                                         pointY + mValuePaint.getTextSize() / 2,
                                         mValuePaint);
-                                filledRects.add(new RectF(pointX - shapeSize / 2, pointY - shapeSize / 2, rect.right, pointY + shapeSize / 2));
+
+                                filledRects.add(new RectF(pointX - shapeSizeMI / 2, pointY - shapeSizeMI / 2, rect.right, pointY + shapeSizeMI / 2));
                             }
                         }
                     }
