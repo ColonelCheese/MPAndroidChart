@@ -471,31 +471,51 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         // if values are drawn
         if (mDrawYValues && mData.getEntriesCount() < mMaxVisibleCount * mTrans.getScaleX()) {
             ArrayList<DecartDataSet> dataSets = mData.getDataSets();
+
             for (int i = 0; i < mData.getDataSetCount(); i++) {
                 DecartDataSet dataSet = dataSets.get(i);
+
                 if (!dataSet.getDisableValueDrawing()) {
                     ArrayList<DecartEntry> entries = dataSet.getEntries();
+
                     float[] positions = mTrans.generateTransformedValuesDecart(entries, mPhaseY);
+
+
                     for (int j = 0; j < positions.length * mPhaseX; j += 2) {
-                        float shapeSize = dataSet.getScatterShapeSize();
-                        filledRects.add(new RectF(positions[j] - shapeSize / 2, positions[j + 1] - shapeSize / 2, positions[j] + shapeSize / 2, positions[j + 1] + shapeSize / 2));
+                        float shapeHalf = dataSet.getScatterShapeSize() / 2;
+                        float sizeMultiplier = getSizeMultiplyer(dataSet, j / 2);
+
+                        float left = positions[j] - shapeHalf * sizeMultiplier;
+                        float top = positions[j + 1] - shapeHalf * sizeMultiplier;
+                        float right = positions[j] + shapeHalf * sizeMultiplier;
+                        float bottom = positions[j + 1] + shapeHalf * sizeMultiplier;
+
+                        filledRects.add(new RectF(left, top, right, bottom));
                     }
                 }
             }
+
             for (int i = 0; i < mData.getDataSetCount(); i++) {
                 DecartDataSet dataSet = dataSets.get(i);
                 if (!dataSet.getDisableValueDrawing()) {
+
                     ArrayList<DecartEntry> entries = dataSet.getEntries();
+
                     float[] positions = mTrans.generateTransformedValuesDecart(entries, mPhaseY);
                     float shapeSize = dataSet.getScatterShapeSize();
+
                     for (int j = 0; j < positions.length * mPhaseX; j += 2) {
                         float pointX = positions[j];
+
                         if (isOffContentRight(pointX))
                             continue;
+
                         float pointY = positions[j + 1];
+
                         if (isOffContentLeft(pointX) || isOffContentTop(pointY)
                                 || isOffContentBottom(pointY))
                             continue;
+
                         String shapeLabel = getShapeLabel(dataSet, j / 2);
                         if (mDrawUnitInChart) {
                             mDrawCanvas.drawText(shapeLabel,
