@@ -739,7 +739,7 @@ public abstract class BarLineChartBase<T extends BarLineScatterCandleData<? exte
      * @param xPos
      * @param positions
      */
-    private void drawYLabels(float xPos, float[] positions, float yOffset) {
+    protected void drawYLabels(float xPos, float[] positions, float yOffset) {
 
         // draw
         for (int i = 0; i < mYLabels.mEntryCount; i++) {
