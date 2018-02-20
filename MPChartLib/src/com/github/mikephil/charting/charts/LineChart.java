@@ -376,7 +376,7 @@ public class LineChart extends BarLineChartBase<LineData> {
      * @param entries
      * @return
      */
-    private Path generateLinePath(ArrayList<Entry> entries) {
+    protected Path generateLinePath(ArrayList<Entry> entries) {
 
         Path line = new Path();
         line.moveTo(entries.get(0).getXIndex(), entries.get(0).getVal() * mPhaseY);
