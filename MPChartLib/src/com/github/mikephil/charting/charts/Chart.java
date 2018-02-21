@@ -191,7 +191,7 @@ public abstract class Chart<T extends ChartData<? extends DataSet<? extends Entr
     protected OnChartValueSelectedListener mSelectionListener;
 
     /** text that is displayed when the chart is empty */
-    private String mNoDataText = "No chart data available.";
+    protected String mNoDataText = "No chart data available.";
 
     /**
      * Gesture listener for custom callbacks when making gestures on the chart.
@@ -202,7 +202,7 @@ public abstract class Chart<T extends ChartData<? extends DataSet<? extends Entr
      * text that is displayed when the chart is empty that describes why the
      * chart is empty
      */
-    private String mNoDataTextDescription;
+    protected String mNoDataTextDescription;
 
     /** default constructor for initialization in code */
     public Chart(Context context) {
@@ -454,7 +454,7 @@ public abstract class Chart<T extends ChartData<? extends DataSet<? extends Entr
     }
 
     /** flag that indicates if offsets calculation has already been done or not */
-    private boolean mOffsetsCalculated = false;
+    protected boolean mOffsetsCalculated = false;
 
     /**
      * Bitmap object used for drawing. This is necessary because hardware
