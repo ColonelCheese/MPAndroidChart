@@ -590,7 +590,7 @@ public abstract class BarLineChartBase<T extends BarLineScatterCandleData<? exte
     /**
      * draws the x-axis labels to the screen depending on their position
      */
-    private void drawXLabels() {
+    protected void drawXLabels() {
 
         if (!mDrawXLabels)
             return;
@@ -677,7 +677,7 @@ public abstract class BarLineChartBase<T extends BarLineScatterCandleData<? exte
     /**
      * draws the y-axis labels to the screen
      */
-    private void drawYLabels() {
+    protected void drawYLabels() {
 
         if (!mDrawYLabels)
             return;
@@ -873,7 +873,7 @@ public abstract class BarLineChartBase<T extends BarLineScatterCandleData<? exte
     /**
      * Draws the limit lines if there are one.
      */
-    private void drawLimitLines() {
+    protected void drawLimitLines() {
 
         ArrayList<LimitLine> limitLines = mData.getLimitLines();
 
@@ -1746,7 +1746,7 @@ public abstract class BarLineChartBase<T extends BarLineScatterCandleData<? exte
      * 
      * @return
      */
-    private T getFilteredData() {
+    protected T getFilteredData() {
         //
         // float deltaRatio = mDeltaY / mDeltaX;
         // float scaleRatio = mScaleY / mScaleX;
