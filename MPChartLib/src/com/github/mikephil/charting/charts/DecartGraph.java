@@ -665,9 +665,4 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
             return x + ", " + y;
         }
     }
-
-    @Override
-    protected float getYValsNearXValueRound() {
-        return super.getYValsNearXValueRound() * 0.0025f;
-    }
 }
