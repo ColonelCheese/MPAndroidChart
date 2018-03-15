@@ -67,12 +67,12 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
     /**
      * the last highlighted object
      */
-    private DecartHighlight mLastHighlighted;
+    protected DecartHighlight mLastHighlighted;
 
     /**
      * the chart the listener represents
      */
-    private T mChart;
+    protected T mChart;
 
     /**
      * the gesturedetector used for detecting taps and longpresses, ...
