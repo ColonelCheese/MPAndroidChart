@@ -45,8 +45,8 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
     private PointF mTouchPointCenter = new PointF();
 
     // states
-    private static final int NONE = 0;
-    private static final int DRAG = 1;
+    protected static final int NONE = 0;
+    protected static final int DRAG = 1;
 
     private static final int X_ZOOM = 2;
     private static final int Y_ZOOM = 3;
@@ -56,7 +56,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
     /**
      * integer field that holds the current touch-state
      */
-    private int mTouchMode = NONE;
+    protected int mTouchMode = NONE;
 
     private boolean mDisableLongClick = false;
 

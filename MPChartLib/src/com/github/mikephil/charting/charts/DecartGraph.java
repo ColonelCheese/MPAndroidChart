@@ -35,7 +35,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
     protected float backgroundInkingMultiplier = 1.2f;
 
-    protected List<RectF> filledRects = new LinkedList<>();
+    protected List<RectF> valueRects = new LinkedList<>();
 
     protected static final float highlightRadius = Utils.convertDpToPixel(36);
 
@@ -467,7 +467,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
     @Override
     protected void drawValues() {
-        filledRects.clear();
+        valueRects.clear();
 
         // if values are drawn
         if (mDrawYValues && mData.getEntriesCount() < mMaxVisibleCount * mTrans.getScaleX()) {
@@ -492,7 +492,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                         float right = positions[j] + shapeHalfMI;
                         float bottom = positions[j + 1] + shapeHalfMI;
 
-                        filledRects.add(new RectF(left, top, right, bottom));
+                        valueRects.add(new RectF(left, top, right, bottom));
                     }
                 }
             }
@@ -540,7 +540,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
                             boolean intersects = false;
 
-                            for (RectF filledRect : filledRects) {
+                            for (RectF filledRect : valueRects) {
                                 if (rect.intersect(filledRect)) {
                                     intersects = true;
                                     break;
@@ -557,7 +557,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
 
                                 boolean intersectsL = false;
 
-                                for (RectF filledRect : filledRects) {
+                                for (RectF filledRect : valueRects) {
                                     if (rectL.intersect(filledRect)) {
                                         intersectsL = true;
                                         break;
@@ -576,7 +576,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                                                 pointY + mValuePaint.getTextSize() / 2,
                                                 mValuePaint);
 
-                                        filledRects.add(new RectF(rectL.left, pointY - shapeSizeMI / 2, pointX + shapeSizeMI / 2, pointY + shapeSizeMI / 2));
+                                        valueRects.add(new RectF(rectL.left, pointY - shapeSizeMI / 2, pointX + shapeSizeMI / 2, pointY + shapeSizeMI / 2));
                                     }
                                     continue;
                                 }
@@ -590,7 +590,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
                                         pointY + mValuePaint.getTextSize() / 2,
                                         mValuePaint);
 
-                                filledRects.add(new RectF(pointX - shapeSizeMI / 2, pointY - shapeSizeMI / 2, rect.right, pointY + shapeSizeMI / 2));
+                                valueRects.add(new RectF(pointX - shapeSizeMI / 2, pointY - shapeSizeMI / 2, rect.right, pointY + shapeSizeMI / 2));
                             }
                         }
                     }
