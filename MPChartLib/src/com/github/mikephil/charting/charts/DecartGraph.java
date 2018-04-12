@@ -618,7 +618,7 @@ public class DecartGraph extends DecartGraphBase<DecartData> {
         }
     }
 
-    private void drawHighlight(DecartHighlight decartHighlight, float[] pts) {
+    protected void drawHighlight(DecartHighlight decartHighlight, float[] pts) {
         getPaintColor(mData.getDataSetByIndex(decartHighlight.getDataSetIndex()), decartHighlight.getmEntryIndex());
         mHighlightPaint.setColor(mRenderPaint.getColor());
         mHighlightPaint.setAlpha(highlightAlpha);
