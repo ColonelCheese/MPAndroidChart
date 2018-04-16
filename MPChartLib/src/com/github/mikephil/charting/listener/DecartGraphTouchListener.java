@@ -27,42 +27,42 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
     /**
      * the original touch-matrix from the chart
      */
-    private Matrix mMatrix = new Matrix();
+    protected Matrix mMatrix = new Matrix();
 
     /**
      * matrix for saving the original matrix state
      */
-    private Matrix mSavedMatrix = new Matrix();
+    protected Matrix mSavedMatrix = new Matrix();
 
     /**
      * point where the touch action started
      */
-    private PointF mTouchStartPoint = new PointF();
+    protected PointF mTouchStartPoint = new PointF();
 
     /**
      * center between two pointers (fingers on the display)
      */
-    private PointF mTouchPointCenter = new PointF();
+    protected PointF mTouchPointCenter = new PointF();
 
     // states
     protected static final int NONE = 0;
     protected static final int DRAG = 1;
 
-    private static final int X_ZOOM = 2;
-    private static final int Y_ZOOM = 3;
-    private static final int PINCH_ZOOM = 4;
-    private static final int POST_ZOOM = 5;
+    protected static final int X_ZOOM = 2;
+    protected static final int Y_ZOOM = 3;
+    protected static final int PINCH_ZOOM = 4;
+    protected static final int POST_ZOOM = 5;
 
     /**
      * integer field that holds the current touch-state
      */
     protected int mTouchMode = NONE;
 
-    private boolean mDisableLongClick = false;
+    protected boolean mDisableLongClick = false;
 
-    private float mSavedXDist = 1f;
-    private float mSavedYDist = 1f;
-    private float mSavedDist = 1f;
+    protected float mSavedXDist = 1f;
+    protected float mSavedYDist = 1f;
+    protected float mSavedDist = 1f;
 
     /**
      * the last highlighted object
@@ -77,7 +77,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
     /**
      * the gesturedetector used for detecting taps and longpresses, ...
      */
-    private GestureDetector mGestureDetector;
+    protected GestureDetector mGestureDetector;
 
     public DecartGraphTouchListener(T chart, Matrix start) {
         this.mChart = chart;
@@ -203,7 +203,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
      *
      * @param event
      */
-    private void performDrag(MotionEvent event) {
+    protected void performDrag(MotionEvent event) {
 
         mMatrix.set(mSavedMatrix);
         PointF dragPoint = new PointF(event.getX(), event.getY());
@@ -223,7 +223,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
      *
      * @param event
      */
-    private void performZoom(MotionEvent event) {
+    protected void performZoom(MotionEvent event) {
 
         if (event.getPointerCount() >= 2) {
 
@@ -309,7 +309,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
      * @param event
      * @return
      */
-    private static float spacing(MotionEvent event) {
+    protected static float spacing(MotionEvent event) {
         float x = event.getX(0) - event.getX(1);
         float y = event.getY(0) - event.getY(1);
         return (float) Math.sqrt(x * x + y * y);
@@ -322,7 +322,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
      * @param e
      * @return
      */
-    private static float getXDist(MotionEvent e) {
+    protected static float getXDist(MotionEvent e) {
         float x = Math.abs(e.getX(0) - e.getX(1));
         return x;
     }
@@ -334,7 +334,7 @@ public class DecartGraphTouchListener<T extends DecartGraphBase<? extends Decart
      * @param e
      * @return
      */
-    private static float getYDist(MotionEvent e) {
+    protected static float getYDist(MotionEvent e) {
         float y = Math.abs(e.getY(0) - e.getY(1));
         return y;
     }
