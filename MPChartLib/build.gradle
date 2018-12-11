@@ -1,12 +1,12 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion compileSdkVer
-    buildToolsVersion buildToolsVer
+    compileSdkVersion rootProject.ext.compileSdkVer
+    buildToolsVersion rootProject.ext.buildToolsVer
     // resourcePrefix 'mpcht'
     defaultConfig {
-        minSdkVersion minSdkVer
-        targetSdkVersion targetSdkVer
+        minSdkVersion rootProject.ext.minSdkVer
+        targetSdkVersion rootProject.ext.targetSdkVer
         versionCode 1
         versionName '1.0'
 
